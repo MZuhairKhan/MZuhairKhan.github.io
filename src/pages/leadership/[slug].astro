@@ -1,0 +1,29 @@
+---
+import RoleDetail from '../../components/RoleDetail.astro';
+import { leadership } from '../../data/leadership';
+
+export function getStaticPaths() {
+  return leadership
+    .filter((entry) => entry.slug)
+    .map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const description = entry.bullets[0] ?? `${entry.role} at ${entry.org}.`;
+---
+
+<RoleDetail
+  title={`${entry.role}, ${entry.org} — Mohammad Zuhair Khan`}
+  description={description}
+  role={entry.role}
+  org={entry.org}
+  orgUrl={entry.orgUrl}
+  period={entry.period}
+  logo={entry.logo}
+  bullets={entry.bullets}
+  detail={entry.detail}
+  images={entry.images}
+  links={entry.links}
+  backHref="/#leadership"
+  backLabel="Back to leadership"
+/>

@@ -1,0 +1,50 @@
+---
+import { getCollection } from 'astro:content';
+import ExpandableCard from './ExpandableCard.astro';
+
+const statusLabels: Record<string, string> = {
+  active: 'Active',
+  archived: 'Archived',
+  wip: 'WIP',
+};
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft && data.featured)).sort(
+  (a, b) => (a.data.order ?? Number.MAX_SAFE_INTEGER) - (b.data.order ?? Number.MAX_SAFE_INTEGER)
+);
+const top = projects.slice(0, 3);
+---
+
+{
+  top.length > 0 && (
+    <section id="projects" class="section">
+      <div class="container">
+        <div class="section-head">
+          <h2 class="section-title">Projects</h2>
+          <a class="view-all" href="/projects">
+            View all projects →
+          </a>
+        </div>
+        <div class="card-row">
+          {top.map((p) => (
+            <ExpandableCard
+              title={p.data.title}
+              thumb={p.data.thumb ?? ''}
+              logo={p.data.logo}
+              subLogo={p.data.subLogo}
+              subLogoAlt={p.data.subLogoAlt}
+              meta={p.data.tech.slice(0, 3).join(' · ')}
+              badge={statusLabels[p.data.status]}
+              body={p.data.description}
+              award={p.data.award}
+              links={[
+                ...(p.data.repo ? [{ label: 'Repo', url: p.data.repo }] : []),
+                ...(p.data.demo ? [{ label: 'Demo', url: p.data.demo }] : []),
+              ]}
+              detailHref={`/projects/${p.id}`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

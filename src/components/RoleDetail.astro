@@ -1,0 +1,246 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface RoleImage {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+interface RoleLink {
+  label: string;
+  url: string;
+}
+interface Props {
+  title: string;
+  description: string;
+  role: string;
+  context?: string;
+  org: string;
+  orgUrl?: string;
+  period?: string;
+  logo?: string;
+  bullets?: string[];
+  detail?: string;
+  /** Full-width image at the very top (the card thumbnail). Not repeated in the gallery. */
+  heroImage?: RoleImage;
+  images?: RoleImage[];
+  links?: RoleLink[];
+  backHref: string;
+  backLabel: string;
+}
+
+const {
+  title,
+  description,
+  role,
+  context,
+  org,
+  orgUrl,
+  period,
+  logo,
+  bullets = [],
+  detail = '',
+  heroImage,
+  images = [],
+  links = [],
+  backHref,
+  backLabel,
+} = Astro.props;
+
+const paragraphs = detail.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="section">
+    <div class="container role-page">
+      <a href={backHref} class="back-link">← {backLabel}</a>
+
+      {heroImage && (
+        <figure class="role-hero">
+          <img src={heroImage.src} alt={heroImage.alt} decoding="async" fetchpriority="high" />
+          {heroImage.caption && <figcaption>{heroImage.caption}</figcaption>}
+        </figure>
+      )}
+
+      <header class="role-head">
+        {logo && <img class="role-logo" src={logo} alt={`${org} logo`} width="56" height="56" />}
+        <div>
+          <h1 class="role-title">{role}</h1>
+          {context && <p class="role-context">{context}</p>}
+          <p class="role-org">
+            {orgUrl ? <a href={orgUrl} target="_blank" rel="noopener">{org} ↗</a> : org}
+          </p>
+          {period && <p class="role-period">{period}</p>}
+        </div>
+      </header>
+
+      {(bullets.length > 0 || paragraphs.length > 0 || images.length > 0) && (
+        <div class:list={['role-body', { 'has-aside': images.length > 0 && (bullets.length > 0 || paragraphs.length > 0) }]}>
+          {(bullets.length > 0 || paragraphs.length > 0) && (
+            <div class="role-maincol">
+              {bullets.length > 0 && (
+                <ul class="role-bullets">
+                  {bullets.map((b) => <li>{b}</li>)}
+                </ul>
+              )}
+              {paragraphs.length > 0 && (
+                <div class="role-detail">
+                  {paragraphs.map((p) => <p set:html={p} />)}
+                </div>
+              )}
+            </div>
+          )}
+          {images.length > 0 && (
+            <div class="role-figures">
+              {images.map((img) => (
+                <figure class="role-figure">
+                  <img src={img.src} alt={img.alt} loading="lazy" decoding="async" />
+                  {img.caption && <figcaption>{img.caption}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {links.length > 0 && (
+        <div class="role-links">
+          {links.map((l) => {
+            const external = l.url.startsWith('http');
+            return (
+              <a class="button button-ghost" href={l.url} {...(external ? { target: '_blank', rel: 'noopener' } : {})}>
+                {l.label} {external ? '↗' : '→'}
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .role-page {
+    max-width: 48rem;
+  }
+  .back-link {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    display: block;
+    width: fit-content;
+    margin-bottom: var(--space-6);
+  }
+  .role-hero {
+    margin: 0 0 var(--space-6);
+  }
+  .role-hero img {
+    display: block;
+    width: 100%;
+    /* Reserve a fixed banner box so the LCP hero photo never shifts layout (CLS). */
+    aspect-ratio: 16 / 9;
+    height: auto;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+  }
+  .role-hero figcaption {
+    margin-top: var(--space-2);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--color-muted);
+  }
+  .role-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .role-logo {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+  .role-title {
+    margin: 0 0 var(--space-1) 0;
+  }
+  .role-context {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-style: italic;
+    color: var(--color-soft);
+  }
+  .role-org {
+    margin: var(--space-1) 0 0 0;
+    font-family: var(--font-sans);
+    color: var(--color-soft);
+  }
+  .role-period {
+    margin: var(--space-1) 0 0 0;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--color-muted);
+  }
+  .role-bullets {
+    margin: 0 0 var(--space-6) 0;
+  }
+  .role-bullets li {
+    font-size: 0.98rem;
+    margin-bottom: var(--space-2);
+  }
+  .role-detail {
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+  .role-detail p {
+    margin: 0 0 var(--space-4) 0;
+  }
+  .role-body.has-aside {
+    display: grid;
+    grid-template-columns: 1fr minmax(200px, 16rem);
+    gap: var(--space-8);
+    align-items: start;
+  }
+  .role-figures {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .role-body:not(.has-aside) .role-figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    margin-top: var(--space-6);
+  }
+  .role-figure {
+    margin: 0;
+  }
+  @media (max-width: 720px) {
+    .role-body.has-aside {
+      grid-template-columns: 1fr;
+      gap: var(--space-6);
+    }
+  }
+  .role-figure img {
+    display: block;
+    width: 100%;
+    /* Reserve space so lazy figure photos don't shift the page as they load. */
+    aspect-ratio: 4 / 3;
+    height: auto;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+  }
+  .role-figure figcaption {
+    margin-top: var(--space-2);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--color-muted);
+  }
+  .role-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+</style>

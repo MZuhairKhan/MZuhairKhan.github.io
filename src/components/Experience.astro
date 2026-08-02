@@ -1,0 +1,48 @@
+---
+import { experience } from '../data/experience';
+---
+
+<section id="experience" class="section">
+  <div class="container">
+    <h2 class="section-title section-title--feature">Experience</h2>
+    <div class="timeline">
+      {experience.map((item) => (
+        <article class:list={['entry', { 'is-current': item.period.endsWith('Present') }]}>
+          {item.logo && (
+            <div class="entry-logo-stack">
+              {item.orgUrl ? (
+                <a class="entry-logo-link" href={item.orgUrl} target="_blank" rel="noopener" aria-label={item.org}>
+                  <img class="entry-logo" src={item.logo} alt={`${item.org} logo`} width="48" height="48" loading="lazy" decoding="async" />
+                </a>
+              ) : (
+                <img class="entry-logo" src={item.logo} alt={`${item.org} logo`} width="48" height="48" loading="lazy" decoding="async" />
+              )}
+              {item.subLogo &&
+                (item.subLogoUrl ? (
+                  <a class="entry-logo-link" href={item.subLogoUrl} target="_blank" rel="noopener" aria-label={item.subLogoAlt}>
+                    <img class="entry-logo" src={item.subLogo} alt={item.subLogoAlt ?? ''} width="48" height="48" loading="lazy" decoding="async" />
+                  </a>
+                ) : (
+                  <img class="entry-logo" src={item.subLogo} alt={item.subLogoAlt ?? ''} width="48" height="48" loading="lazy" decoding="async" />
+                ))}
+            </div>
+          )}
+          <div class="entry-main">
+            <header class="entry-header">
+              <div>
+                <div class="entry-title">{item.role}</div>
+                {item.context && <div class="entry-context">{item.context}</div>}
+                <div class="entry-org">{item.org}</div>
+              </div>
+              <div class="entry-meta">{item.period}</div>
+            </header>
+            <ul class="entry-bullets">
+              {item.bullets.map((b) => <li>{b}</li>)}
+            </ul>
+            {item.slug && <a class="entry-more" href={`/experience/${item.slug}`}>More detail →</a>}
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

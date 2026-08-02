@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { profile } from '../data/profile';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Experience from '../components/Experience.astro';
+import Publications from '../components/Publications.astro';
+import ProjectsHome from '../components/ProjectsHome.astro';
+import Education from '../components/Education.astro';
+import Talks from '../components/Talks.astro';
+import Leadership from '../components/Leadership.astro';
+import Skills from '../components/Skills.astro';
+import Achievements from '../components/Achievements.astro';
+import Contact from '../components/Contact.astro';
+
+const description = `${profile.fullName} — ${profile.tagline}. ${profile.about}`;
+---
+
+<BaseLayout description={description}>
+  <Hero />
+  <About />
+  {/* Background — the record: studied, worked, led. Education leads because the
+      About paragraph ends on the Master's, and because Experience is by far the
+      tallest section (~1360px) — behind it, Education fell three screens down. */}
+  <Education />
+  <Experience />
+  <Leadership />
+  {/* Showcase — the output that record produced. */}
+  <ProjectsHome />
+  <Publications />
+  <Talks />
+  {/* Recognition — the credentials it earned. */}
+  <Achievements />
+  <Skills />
+  <Contact />
+</BaseLayout>

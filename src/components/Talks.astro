@@ -1,0 +1,33 @@
+---
+import { talks } from '../data/talks';
+import ExpandableCard from './ExpandableCard.astro';
+
+const top = talks.slice(0, 3);
+---
+
+<section id="talks" class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="section-title">Talks &amp; Presentations</h2>
+      <a class="view-all" href="/talks">View all talks →</a>
+    </div>
+    <div class="card-row">
+      {
+        top.map((talk) => (
+          <ExpandableCard
+            title={talk.title}
+            thumb={talk.image}
+            thumbRatio={talk.imageRatio}
+            meta={[talk.venue, talk.event, talk.date].filter(Boolean).join(' · ')}
+            badge={talk.role}
+            body={talk.description}
+            links={[
+              ...(talk.links?.map((l) => ({ label: l.label, url: l.url })) ?? []),
+              ...(talk.url ? [{ label: 'Event page', url: talk.url }] : []),
+            ]}
+          />
+        ))
+      }
+    </div>
+  </div>
+</section>

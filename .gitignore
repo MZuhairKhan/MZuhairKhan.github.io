@@ -1,0 +1,46 @@
+# Build output
+dist/
+.astro/
+
+# Scratch HTML the OG generator renders from (~1 MB of inlined base64).
+# The script removes it on exit; this covers a run that died partway.
+scripts/.og.html
+
+# Source-only assets not served by the site (e.g. LaTeX CV photo sources)
+Img/
+
+# CV source material — LaTeX project plus the master PDF builds
+Reference/
+
+# Design-review screenshot captures — regenerable via the screenshot skill
+design-review/
+
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.production
+.env.local
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# Claude Code machine-local settings (the shared .claude/skills stay tracked)
+.claude/settings.local.json

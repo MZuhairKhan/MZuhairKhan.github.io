@@ -1,0 +1,110 @@
+---
+import { languages, programming, skillSet } from '../data/skills';
+import SkillBar from './SkillBar.astro';
+---
+
+<section id="skills" class="section">
+  <div class="container">
+    <h2 class="section-title">Skills</h2>
+
+    <div class="skills-grid">
+      <div class="skills-col">
+        <h3 class="skills-subtitle">Programming</h3>
+        {programming.map((p) => <SkillBar name={p.name} rating={p.rating} outOf={p.outOf} />)}
+      </div>
+
+      <div class="skills-col">
+        <h3 class="skills-subtitle">Languages</h3>
+        <div class="lang-pills">
+          {languages.map((l) => (
+            <span class="lang-pill">
+              <span class="lang-name">{l.name}</span>
+              <span class="lang-level">{l.level}</span>
+              {l.note && <span class="lang-note">{l.note}</span>}
+            </span>
+          ))}
+        </div>
+        <p class="cefr-note muted small">CEFR proficiency levels.</p>
+
+        <div class="skills-set">
+          <h3 class="skills-subtitle">Skill Set</h3>
+          <div class="skill-chips">
+            {skillSet.map((s) => <span class="skill-chip">{s}</span>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-8);
+    align-items: start;
+  }
+  .skills-subtitle {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-soft);
+    margin: 0 0 var(--space-4) 0;
+  }
+  .lang-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .lang-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-card);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+  }
+  .lang-pill .lang-name {
+    font-weight: 500;
+  }
+  .lang-pill .lang-level {
+    font-weight: 600;
+    color: var(--color-accent-dark);
+  }
+  .lang-pill .lang-note {
+    color: var(--color-muted);
+    font-size: 0.78rem;
+  }
+  .cefr-note {
+    margin-top: var(--space-3);
+  }
+  .skills-set {
+    margin-top: var(--space-6);
+  }
+  .skill-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .skill-chip {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--color-border);
+    border-left: 2px solid var(--color-accent);
+    border-radius: var(--radius);
+    background: var(--color-card);
+    color: var(--color-text);
+  }
+  @media (max-width: 640px) {
+    .skills-grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-6);
+    }
+  }
+</style>

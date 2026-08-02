@@ -1,0 +1,118 @@
+---
+interface Props {
+  title: string;
+  authors: string[];
+  venue?: string;
+  year: number;
+  type: string;
+  href: string;
+  tags?: string[];
+  logo?: string;
+  subLogo?: string;
+  subLogoAlt?: string;
+}
+
+const { title, authors, venue, year, type, href, tags = [], logo, subLogo, subLogoAlt } = Astro.props;
+
+const typeLabels: Record<string, string> = {
+  thesis: 'Thesis',
+  preprint: 'Preprint',
+  journal: 'Journal',
+  conference: 'Conference',
+  workshop: 'Workshop',
+};
+---
+
+<a href={href} class="paper-card">
+  <div class="paper-head">
+    <span class="type-badge">{typeLabels[type] ?? type}</span>
+    <span class="year">{year}</span>
+  </div>
+  <h3 class="paper-title">{title}</h3>
+  <p class="paper-authors">{authors.join(', ')}</p>
+  {venue && <p class="paper-venue">{venue}</p>}
+  {logo && (
+    <div class="paper-logos">
+      <img src={logo} alt={venue ?? 'Institution'} width="28" height="28" loading="lazy" decoding="async" />
+      {subLogo && <img src={subLogo} alt={subLogoAlt ?? ''} width="28" height="28" loading="lazy" decoding="async" />}
+    </div>
+  )}
+  {tags.length > 0 && (
+    <div class="paper-tags">
+      {tags.map((t) => <span class="tag">{t}</span>)}
+    </div>
+  )}
+</a>
+
+<style>
+  .paper-card {
+    display: block;
+    padding: var(--space-6);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius);
+    background: var(--color-card);
+    color: var(--color-text);
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    transition: all 0.15s ease;
+  }
+  .paper-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(70, 162, 71, 0.1);
+    text-decoration: none;
+  }
+  .paper-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+  }
+  .type-badge {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-accent-dark);
+    background: var(--color-accent-bg);
+    padding: 0.15rem 0.6rem;
+    border-radius: 4px;
+  }
+  .year {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-muted);
+  }
+  .paper-title {
+    font-size: 1.05rem;
+    margin: 0 0 var(--space-2) 0;
+  }
+  .paper-authors {
+    margin: 0 0 var(--space-1) 0;
+    font-size: 0.9rem;
+    color: var(--color-soft);
+  }
+  .paper-venue {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-muted);
+    font-style: italic;
+  }
+  .paper-logos {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+  .paper-logos img {
+    height: 28px;
+    width: auto;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+  .paper-tags {
+    margin-top: var(--space-3);
+  }
+</style>

@@ -1,0 +1,304 @@
+---
+import { Image } from 'astro:assets';
+import { profile } from '../data/profile';
+import portrait from '../assets/profile.png';
+---
+
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-text">
+      <p class="hero-eyebrow">Hello, I'm</p>
+      <h1 class="hero-name">{profile.fullName}</h1>
+      <p class="hero-tagline">{profile.tagline}</p>
+      <p class="hero-pitch">{profile.pitch}</p>
+
+      <p class="hero-meta">
+        <span class="hero-location"><svg class="hero-pin" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg> {profile.location}</span>
+        <span class="hero-available"><span class="dot" aria-hidden="true"></span> {profile.availability}</span>
+      </p>
+
+      <ul class="hero-profile">
+        {profile.profile.map((item) => <li>{item}</li>)}
+      </ul>
+
+      <div class="hero-actions">
+        <a class="button" href="#contact">Get in touch</a>
+        <a class="button button-ghost" href={profile.cvUrl} target="_blank" rel="noopener">
+          Download CV
+        </a>
+        <a class="button button-ghost" href={profile.links.linkedin} target="_blank" rel="noopener">
+          LinkedIn
+        </a>
+        <a class="button button-ghost" href={profile.links.github} target="_blank" rel="noopener">
+          GitHub
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-photo-wrap">
+      <Image
+        src={portrait}
+        alt={`Portrait of ${profile.fullName}`}
+        class="hero-photo"
+        width={440}
+        height={440}
+        loading="eager"
+        decoding="async"
+        fetchpriority="high"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    /* Engineering graph-paper surface: a green-tinted field with a fine grid and
+       a heavier major grid every 5th line. The tint reads as light radiating
+       from the portrait. Built from the accent green only (BRAND.md §3). */
+    --hero-wash: 80% 52%;
+    background-color: var(--color-bg);
+    background-image:
+      repeating-linear-gradient(180deg, transparent 0, transparent 27px, rgba(70, 162, 71, 0.09) 27px, rgba(70, 162, 71, 0.09) 28px),
+      repeating-linear-gradient(90deg, transparent 0, transparent 27px, rgba(70, 162, 71, 0.09) 27px, rgba(70, 162, 71, 0.09) 28px),
+      repeating-linear-gradient(180deg, transparent 0, transparent 139px, rgba(70, 162, 71, 0.15) 139px, rgba(70, 162, 71, 0.15) 140px),
+      repeating-linear-gradient(90deg, transparent 0, transparent 139px, rgba(70, 162, 71, 0.15) 139px, rgba(70, 162, 71, 0.15) 140px),
+      /* Green tint as light from the portrait: an isotropic circle centred on the
+         photo whose alpha follows an inverse-square law, α(t) = 0.30 / (1 + (7t)²),
+         t = distance / farthest-corner. `circle` keeps the falloff direction-free. */
+      radial-gradient(circle at var(--hero-wash),
+        rgba(70, 162, 71, 0.3) 0%,
+        rgba(70, 162, 71, 0.267) 5%,
+        rgba(70, 162, 71, 0.201) 10%,
+        rgba(70, 162, 71, 0.143) 15%,
+        rgba(70, 162, 71, 0.101) 20%,
+        rgba(70, 162, 71, 0.074) 25%,
+        rgba(70, 162, 71, 0.055) 30%,
+        rgba(70, 162, 71, 0.034) 40%,
+        rgba(70, 162, 71, 0.023) 50%,
+        rgba(70, 162, 71, 0.014) 65%,
+        rgba(70, 162, 71, 0.009) 80%,
+        rgba(70, 162, 71, 0) 100%);
+    padding: var(--space-16) 0 var(--space-12);
+    /* Contain the halo and the landing scale-up so neither causes page scroll. */
+    overflow-x: clip;
+  }
+  /* Melt the green field into the plain About band below so there's no seam. */
+  .hero::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--space-16) * 2);
+    /* --color-bg (#fafaf6) at 0 alpha → opaque, so the fade can't tint grey. */
+    background: linear-gradient(180deg, rgba(250, 250, 246, 0), var(--color-bg));
+    z-index: 1;
+    pointer-events: none;
+  }
+  /* Taller hero on landing; it starts enlarged and scales to normal on scroll (JS). */
+  @media (min-width: 768px) {
+    .hero {
+      min-height: 72vh;
+      display: grid;
+      align-content: center;
+    }
+  }
+  .hero-inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-12);
+    align-items: center;
+    transform-origin: center;
+    will-change: transform;
+  }
+  .hero-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-accent-dark);
+    margin: 0 0 var(--space-2) 0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .hero-name {
+    margin: 0 0 var(--space-3) 0;
+  }
+  .hero-tagline {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    color: var(--color-soft);
+    margin: 0 0 var(--space-3) 0;
+    line-height: 1.4;
+  }
+  .hero-pitch {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--color-text);
+    margin: 0 0 var(--space-4) 0;
+    line-height: 1.6;
+    max-width: 36rem;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-soft);
+    margin: 0 0 var(--space-6) 0;
+  }
+  .hero-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+  }
+  .hero-pin {
+    color: var(--color-accent);
+  }
+  .hero-available {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--color-accent-dark);
+    font-weight: 500;
+  }
+  .hero-available .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    /* Small steady glow (echoes the portrait halo); the expanding ring below
+       pulses on top of it via box-shadow. */
+    filter: drop-shadow(0 0 3px rgba(70, 162, 71, 0.7));
+    animation: hero-pulse 2.5s ease-out infinite;
+  }
+  @keyframes hero-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(70, 162, 71, 0.5);
+    }
+    70% {
+      box-shadow: 0 0 0 6px rgba(70, 162, 71, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(70, 162, 71, 0);
+    }
+  }
+  .hero-profile {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-6) 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .hero-profile li {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    background: var(--color-tag-bg);
+    border: 1px solid var(--color-tag-border);
+    color: var(--color-accent-dark);
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 500;
+    margin: 0;
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .hero-photo-wrap {
+    flex-shrink: 0;
+    position: relative;
+    display: inline-flex;
+    /* Hug the photo (don't stretch to the grid column on mobile). */
+    width: fit-content;
+  }
+  /* Breathing green halo behind the portrait. Animates opacity + scale only
+     (no reflow); reduced-motion visitors get the bright state, held still. */
+  .hero-photo-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -64px;
+    border-radius: 50%;
+    /* Smooth radial falloff from the photo centre outward (no plateau). */
+    background: radial-gradient(closest-side, rgba(70, 162, 71, 0.8), rgba(70, 162, 71, 0));
+    z-index: 0;
+    animation: hero-glow 5s ease-in-out infinite;
+  }
+  @keyframes hero-glow {
+    0%, 100% {
+      opacity: 0.8;
+      transform: scale(0.9);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.1);
+    }
+  }
+  .hero-photo {
+    position: relative;
+    z-index: 1;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--color-accent);
+    /* The portrait is a cutout, so the disc needs its own backdrop. Painting it
+       here rather than into the image keeps it *transparent at the rim*: the
+       sweep fades out before the border, so the disc edge is literally the same
+       pixels as the hero behind it and can never mismatch — including while the
+       halo breathes. The off-centre stop is a key light behind the head, which
+       restores the tonal gradation a real studio backdrop has.
+       Both layers are sized so they reach zero *at or inside* the inscribed
+       circle — an unsized `circle at …` resolves to farthest-corner and would
+       still be ~50% opaque at the top of the disc. The key light is offset to
+       34%, so its radius is capped at 50% - 16% = 34% to stay contained. */
+    background:
+      radial-gradient(ellipse 32% 32% at 50% 34%, rgba(252, 253, 250, 0.42), rgba(252, 253, 250, 0) 100%),
+      radial-gradient(
+        ellipse 50% 50% at 50% 50%,
+        rgba(252, 253, 250, 0.82) 0%,
+        rgba(252, 253, 250, 0.58) 48%,
+        rgba(252, 253, 250, 0.18) 80%,
+        rgba(252, 253, 250, 0) 100%
+      );
+  }
+  @media (max-width: 768px) {
+    .hero {
+      /* Portrait is centred at the top on mobile — anchor the tint on it. */
+      --hero-wash: 50% 17%;
+    }
+    .hero-inner {
+      grid-template-columns: 1fr;
+      text-align: left;
+      gap: var(--space-6);
+    }
+    .hero-photo-wrap {
+      order: -1;
+      justify-self: center;
+    }
+    .hero-photo-wrap::before {
+      inset: -38px;
+    }
+    .hero-photo {
+      width: 180px;
+      height: 180px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-photo-wrap::before {
+      animation: none;
+      opacity: 1;
+    }
+    .hero-available .dot {
+      animation: none;
+    }
+  }
+</style>

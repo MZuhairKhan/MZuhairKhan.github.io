@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ExpandableCard from '../components/ExpandableCard.astro';
+import Certifications from '../components/Certifications.astro';
+import { achievements } from '../data/achievements';
+---
+
+<BaseLayout title="Awards — Mohammad Zuhair Khan" description="Achievements, awards, and certifications earned by Mohammad Zuhair Khan.">
+  <section class="section">
+    <div class="container">
+      <a href="/#achievements" class="back-link">← Back home</a>
+      <h1 class="section-title">Achievements &amp; Awards</h1>
+      <p class="page-intro">Competitions, hackathons, and certifications. Click any card for details.</p>
+      <div class="card-grid">
+        {
+          achievements.map((a) => {
+            const detailHref = a.slug ? `/awards/${a.slug}` : a.projectId ? `/projects/${a.projectId}` : undefined;
+            const detailLabel = a.slug ? 'View details →' : 'View project →';
+            return (
+              <ExpandableCard
+                title={a.title}
+                thumb={a.image}
+                logo={a.logo}
+                thumbRatio={a.thumbRatio}
+                meta={a.org}
+                badge={a.result}
+                body={a.description}
+                imageCredit={a.imageCredit}
+                imageCreditUrl={a.imageCreditUrl}
+                links={[
+                  ...(a.url ? [{ label: 'Details', url: a.url }] : []),
+                  ...(a.credlyUrl ? [{ label: 'Verify on Credly', url: a.credlyUrl }] : []),
+                  ...(a.repo ? [{ label: 'View code', url: a.repo }] : []),
+                ]}
+                detailHref={detailHref}
+                detailLabel={detailLabel}
+              />
+            );
+          })
+        }
+      </div>
+      <Certifications />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .back-link {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    display: block;
+    width: fit-content;
+    margin-bottom: var(--space-4);
+  }
+  .page-intro {
+    color: var(--color-soft);
+    margin-bottom: var(--space-8);
+    max-width: 40rem;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+    align-items: start;
+  }
+</style>

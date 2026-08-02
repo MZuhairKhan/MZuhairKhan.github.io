@@ -1,0 +1,38 @@
+---
+import { leadership } from '../data/leadership';
+---
+
+<section id="leadership" class="section">
+  <div class="container">
+    <h2 class="section-title">Leadership &amp; Outreach</h2>
+    <div class="timeline">
+    {leadership.map((item) => (
+      <article class:list={['entry', { 'is-current': item.period.endsWith('Present') }]}>
+        {item.logo &&
+          (item.orgUrl ? (
+            <a class="entry-logo-link" href={item.orgUrl} target="_blank" rel="noopener" aria-label={item.org}>
+              <img class="entry-logo" src={item.logo} alt={`${item.org} logo`} width="48" height="48" loading="lazy" decoding="async" />
+            </a>
+          ) : (
+            <img class="entry-logo" src={item.logo} alt={`${item.org} logo`} width="48" height="48" loading="lazy" decoding="async" />
+          ))}
+        <div class="entry-main">
+          <header class="entry-header">
+            <div>
+              <div class="entry-title">{item.role}</div>
+              <div class="entry-org">{item.org}</div>
+            </div>
+            <div class="entry-meta">{item.period}</div>
+          </header>
+          <ul class="entry-bullets">
+            {item.bullets.map((b) => <li>{b}</li>)}
+          </ul>
+          {item.slug && (
+            <a class="entry-more" href={`/leadership/${item.slug}`}>More detail →</a>
+          )}
+        </div>
+      </article>
+    ))}
+    </div>
+  </div>
+</section>

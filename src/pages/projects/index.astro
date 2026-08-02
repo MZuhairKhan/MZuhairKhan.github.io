@@ -1,0 +1,80 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ExpandableCard from '../../components/ExpandableCard.astro';
+
+const statusLabels: Record<string, string> = {
+  active: 'Active',
+  archived: 'Archived',
+  wip: 'WIP',
+};
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort((a, b) => {
+  const orderA = a.data.order ?? Number.MAX_SAFE_INTEGER;
+  const orderB = b.data.order ?? Number.MAX_SAFE_INTEGER;
+  if (orderA !== orderB) return orderA - orderB;
+  return b.data.date.valueOf() - a.data.date.valueOf();
+});
+---
+
+<BaseLayout title="Projects — Mohammad Zuhair Khan" description="Projects and code by Mohammad Zuhair Khan.">
+  <section class="section">
+    <div class="container">
+      <a href="/#projects" class="back-link">← Back home</a>
+      <h1 class="section-title">Projects</h1>
+      <p class="page-intro">Things I've built — code, experiments, and side projects. Click any card for details.</p>
+
+      {
+        projects.length === 0 ? (
+          <p class="empty">No projects published yet — check back soon.</p>
+        ) : (
+          <div class="card-grid">
+            {projects.map((project) => (
+              <ExpandableCard
+                title={project.data.title}
+                thumb={project.data.thumb ?? ''}
+                logo={project.data.logo}
+                subLogo={project.data.subLogo}
+                subLogoAlt={project.data.subLogoAlt}
+                meta={project.data.tech.slice(0, 3).join(' · ')}
+                badge={statusLabels[project.data.status]}
+                body={project.data.description}
+                award={project.data.award}
+                links={[
+                  ...(project.data.repo ? [{ label: 'Repo', url: project.data.repo }] : []),
+                  ...(project.data.demo ? [{ label: 'Demo', url: project.data.demo }] : []),
+                ]}
+                detailHref={`/projects/${project.id}`}
+              />
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .back-link {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    display: block;
+    width: fit-content;
+    margin-bottom: var(--space-4);
+  }
+  .page-intro {
+    color: var(--color-soft);
+    margin-bottom: var(--space-8);
+    max-width: 40rem;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+    align-items: start;
+  }
+  .empty {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+</style>

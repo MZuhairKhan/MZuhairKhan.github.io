@@ -1,0 +1,813 @@
+---
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import { profile } from '../data/profile';
+
+interface Props {
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const {
+  title = `${profile.fullName} — ${profile.tagline}`,
+  description = profile.about,
+  noindex = false,
+} = Astro.props;
+
+const pathname = Astro.url.pathname;
+const canonical = new URL(pathname, Astro.site).href;
+const ogImage = new URL('/og-image.png', Astro.site).href;
+const buildNow = new Date();
+const buildDate = buildNow.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' });
+const buildIso = buildNow.toISOString().slice(0, 10);
+
+interface NavLink {
+  label: string;
+  href: string;
+  section?: string;
+}
+interface NavEntry {
+  label: string;
+  href?: string;
+  section?: string;
+  children?: NavLink[];
+}
+
+// Grouped navigation, mirroring the homepage order exactly so the dropdowns read
+// as a table of contents: Background (studied, worked, led) → Showcase (what that
+// produced) → Recognition (what it earned). Leadership sits in Background rather
+// than beside the awards because outreach is part of the record, not a prize.
+const navEntries: NavEntry[] = [
+  { label: 'About', href: '/#about', section: 'about' },
+  {
+    label: 'Background',
+    children: [
+      { label: 'Education', href: '/#education', section: 'education' },
+      { label: 'Experience', href: '/#experience', section: 'experience' },
+      { label: 'Leadership', href: '/#leadership', section: 'leadership' },
+    ],
+  },
+  {
+    label: 'Showcase',
+    children: [
+      { label: 'Projects', href: '/projects', section: 'projects' },
+      { label: 'Papers', href: '/papers', section: 'publications' },
+      { label: 'Talks', href: '/#talks', section: 'talks' },
+    ],
+  },
+  {
+    label: 'Recognition',
+    children: [
+      { label: 'Achievements', href: '/#achievements', section: 'achievements' },
+      { label: 'Skills', href: '/#skills', section: 'skills' },
+    ],
+  },
+  { label: 'Contact', href: '/#contact', section: 'contact' },
+];
+
+const isRouteHref = (href: string): boolean => href.startsWith('/') && !href.startsWith('/#');
+const currentAttr = (href: string): 'page' | undefined =>
+  isRouteHref(href) && (pathname === href || pathname === `${href}/`) ? 'page' : undefined;
+
+const sameAs = [profile.links.linkedin, profile.links.github, profile.links.orcid, profile.links.scholar].filter(Boolean);
+const personLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: profile.fullName,
+  url: Astro.site?.href,
+  jobTitle: profile.tagline,
+  email: `mailto:${profile.email}`,
+  address: { '@type': 'PostalAddress', addressLocality: profile.location },
+  sameAs,
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script is:inline>
+      // Enable scroll-reveal before paint, but never for reduced-motion users.
+      (() => {
+        try {
+          if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.documentElement.classList.add('reveal-on');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <ClientRouter />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <!-- Preload the above-the-fold serif weights (body 400-500, headings/name 700)
+         so the LCP text paints without waiting on the font request. -->
+    <link rel="preload" href="/fonts/cmu-serif-500-roman.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/cmu-serif-700-roman.woff2" as="font" type="font/woff2" crossorigin />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={noindex ? 'noindex, follow' : 'index, follow'} />
+    <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161613" media="(prefers-color-scheme: dark)" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={profile.fullName} />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={profile.fullName} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${profile.fullName} — ${profile.tagline}`} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="alternate" type="application/rss+xml" title="Papers — Mohammad Zuhair Khan" href="/rss.xml" />
+
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(personLd)} />
+
+    {/* Per-page <head> extras (e.g. Google Scholar citation_* meta, entity JSON-LD). */}
+    <slot name="head" />
+  </head>
+  <body>
+    <div id="scroll-progress" class="scroll-progress" aria-hidden="true"></div>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <p class="print-contact">{profile.fullName} · {profile.email} · {profile.location} · {canonical}</p>
+    <header class="site-header">
+      <nav class="container nav" data-open="false" aria-label="Primary">
+        <div class="nav-bar">
+          <a href="/" class="brand" transition:name="brand-wordmark">{profile.fullName}</a>
+          <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">Menu</button>
+        </div>
+        <ul id="primary-nav" class="nav-links">
+          {navEntries.map((entry) =>
+            entry.children ? (
+              <li class="nav-group" data-open="false">
+                <button class="nav-trigger" type="button" aria-expanded="false" aria-haspopup="true">
+                  {entry.label}
+                  <svg class="nav-caret" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <ul class="nav-menu">
+                  {entry.children.map((c) => (
+                    <li>
+                      <a href={c.href} data-section={c.section} aria-current={currentAttr(c.href)}>{c.label}</a>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ) : (
+              <li>
+                <a href={entry.href} data-section={entry.section} aria-current={currentAttr(entry.href!)}>{entry.label}</a>
+              </li>
+            )
+          )}
+          <li><a href={profile.cvUrl} target="_blank" rel="noopener" class="nav-cv">CV ↗</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p class="muted small">
+          © {new Date().getFullYear()} {profile.fullName} · Updated <time datetime={buildIso}>{buildDate}</time>. Built with <a href="https://astro.build" target="_blank" rel="noopener">Astro</a>.
+        </p>
+      </div>
+    </footer>
+
+    <button id="back-to-top" class="back-to-top" type="button" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </button>
+
+    <div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Image viewer">
+      <button class="lightbox-close" type="button" aria-label="Close image">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
+      </button>
+      <img class="lightbox-img" src="" alt="" decoding="async" />
+    </div>
+
+    <style>
+      .site-header {
+        position: sticky;
+        top: 0;
+        background: var(--color-header-bg);
+        backdrop-filter: saturate(180%) blur(8px);
+        -webkit-backdrop-filter: saturate(180%) blur(8px);
+        border-bottom: 1px solid var(--color-border-soft);
+        z-index: 100;
+      }
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+        padding-top: var(--space-3);
+        padding-bottom: var(--space-3);
+      }
+      .nav-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+      }
+      .brand {
+        font-family: var(--font-sans);
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--color-text);
+        text-decoration: none;
+        letter-spacing: -0.01em;
+      }
+      .brand:hover {
+        color: var(--color-accent-dark);
+        text-decoration: none;
+      }
+      .nav-toggle {
+        display: none;
+        font-size: 0.85rem;
+        padding: 0.35rem 0.75rem;
+        background: transparent;
+        color: var(--color-accent-dark);
+        border: 1px solid var(--color-border);
+      }
+      .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        list-style: none;
+        gap: var(--space-4);
+        margin: 0;
+        padding: 0;
+        align-items: center;
+      }
+      /* Flex each top-level item so links and dropdown triggers center
+         identically (plain <li> line-leading otherwise sits them 2px apart). */
+      .nav-links > li {
+        display: flex;
+        align-items: center;
+      }
+      .nav-links a {
+        display: inline-flex;
+        align-items: center;
+        font-family: var(--font-sans);
+        font-size: 0.82rem;
+        font-weight: 500;
+        line-height: 1.5;
+        color: var(--color-soft);
+        text-decoration: none;
+        padding-bottom: 2px;
+        border-bottom: 2px solid transparent;
+      }
+      .nav-links a:hover {
+        color: var(--color-accent-dark);
+        text-decoration: none;
+      }
+      .nav-links a.is-active,
+      .nav-links a[aria-current='page'] {
+        color: var(--color-accent-dark);
+        border-bottom-color: var(--color-accent);
+      }
+      .nav-cv {
+        color: var(--color-accent-dark) !important;
+      }
+      /* Themed dropdown groups (Work / Research) */
+      .nav-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .nav-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        font-family: var(--font-sans);
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--color-soft);
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 0 0 2px;
+        cursor: pointer;
+        line-height: 1.5;
+      }
+      .nav-trigger:hover {
+        color: var(--color-accent-dark);
+      }
+      .nav-trigger.is-active {
+        color: var(--color-accent-dark);
+        border-bottom-color: var(--color-accent);
+      }
+      .nav-caret {
+        opacity: 0.7;
+        transition: transform 0.2s ease;
+      }
+      .nav-group[data-open='true'] .nav-caret {
+        transform: rotate(180deg);
+      }
+      .nav-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin: 0.55rem 0 0;
+        padding: var(--space-2);
+        list-style: none;
+        min-width: 11.5rem;
+        background: var(--color-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        box-shadow: 0 6px 20px rgba(58, 50, 30, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-6px);
+        transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+        z-index: 110;
+      }
+      /* Invisible bridge across the trigger→menu gap so hover doesn't drop. */
+      .nav-menu::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: -0.6rem;
+        height: 0.6rem;
+      }
+      .nav-group[data-open='true'] .nav-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+      .nav-menu a {
+        display: block;
+        padding: 0.4rem 0.6rem;
+        border-radius: 4px;
+        font-family: var(--font-sans);
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--color-soft);
+        white-space: nowrap;
+      }
+      .nav-menu a:hover {
+        color: var(--color-accent-dark);
+        background: var(--color-accent-bg);
+        text-decoration: none;
+      }
+      .nav-menu a.is-active,
+      .nav-menu a[aria-current='page'] {
+        color: var(--color-accent-dark);
+        background: var(--color-accent-bg);
+        border-bottom: none;
+      }
+      /* Scroll progress bar (top) + back-to-top button */
+      .scroll-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 0;
+        background: var(--color-accent);
+        z-index: 150;
+        transition: width 0.1s linear;
+        pointer-events: none;
+      }
+      .back-to-top {
+        position: fixed;
+        bottom: var(--space-6);
+        right: var(--space-6);
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border-radius: 50%;
+        background: var(--color-btn-bg);
+        color: var(--color-btn-text);
+        border: 1px solid var(--color-btn-bg);
+        box-shadow: 0 4px 14px rgba(58, 50, 30, 0.18);
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px);
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s, background 0.15s ease;
+        z-index: 90;
+      }
+      .back-to-top.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+      .back-to-top:hover {
+        background: var(--color-btn-bg-hover);
+        border-color: var(--color-btn-bg-hover);
+      }
+      .site-footer {
+        margin-top: var(--space-16);
+        padding: var(--space-8) 0;
+        border-top: 1px solid var(--color-border-soft);
+        background: var(--color-bg);
+      }
+      .footer-inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-4);
+      }
+      .footer-inner p {
+        margin: 0;
+      }
+      @media (max-width: 640px) {
+        .nav {
+          flex-direction: column;
+          align-items: stretch;
+          gap: var(--space-3);
+        }
+        .nav-bar {
+          width: 100%;
+        }
+        .nav.js-enabled .nav-toggle {
+          display: inline-flex;
+        }
+        .nav.js-enabled .nav-links {
+          display: none;
+        }
+        .nav.js-enabled[data-open='true'] .nav-links {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--space-3);
+          padding-bottom: var(--space-2);
+        }
+        /* In the mobile drawer the dropdowns are expanded inline, not floating. */
+        .nav-group {
+          display: block;
+          width: 100%;
+        }
+        .nav-trigger {
+          width: 100%;
+        }
+        .nav-caret {
+          display: none;
+        }
+        .nav-menu {
+          position: static;
+          opacity: 1;
+          visibility: visible;
+          transform: none;
+          box-shadow: none;
+          border: none;
+          background: transparent;
+          min-width: 0;
+          margin: var(--space-1) 0 0;
+          padding: 0 0 0 var(--space-4);
+        }
+        .nav-menu a {
+          padding: 0.3rem 0;
+        }
+        .back-to-top {
+          bottom: var(--space-4);
+          right: var(--space-4);
+        }
+      }
+    </style>
+
+    <script>
+      // Re-run on every page load AND after each View Transition navigation.
+      function setupReveal() {
+        if (!document.documentElement.classList.contains('reveal-on')) return;
+        const revealEls = document.querySelectorAll<HTMLElement>('.section, .hero');
+        if ('IntersectionObserver' in window) {
+          const revealObserver = new IntersectionObserver(
+            (entries, obs) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add('is-visible');
+                  obs.unobserve(entry.target);
+                }
+              });
+            },
+            { rootMargin: '0px 0px -10% 0px', threshold: 0.05 }
+          );
+          revealEls.forEach((el) => revealObserver.observe(el));
+        } else {
+          revealEls.forEach((el) => el.classList.add('is-visible'));
+        }
+      }
+
+      function setScrollPad() {
+        const header = document.querySelector<HTMLElement>('.site-header');
+        if (header) {
+          document.documentElement.style.scrollPaddingTop = `${header.offsetHeight + 16}px`;
+        }
+      }
+
+      function closeAllDropdowns() {
+        document.querySelectorAll<HTMLElement>('.nav-group').forEach((g) => {
+          g.setAttribute('data-open', 'false');
+          const t = g.querySelector<HTMLButtonElement>('.nav-trigger');
+          if (t) t.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      function setupDropdowns(nav: HTMLElement) {
+        const hoverable = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        nav.querySelectorAll<HTMLElement>('.nav-group').forEach((group) => {
+          const trigger = group.querySelector<HTMLButtonElement>('.nav-trigger');
+          if (!trigger) return;
+          const open = () => {
+            closeAllDropdowns();
+            group.setAttribute('data-open', 'true');
+            trigger.setAttribute('aria-expanded', 'true');
+          };
+          const close = () => {
+            group.setAttribute('data-open', 'false');
+            trigger.setAttribute('aria-expanded', 'false');
+          };
+          trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // On hover pointers, mouseenter/leave already drive the menu, so a
+            // mouse click is a no-op; keyboard activation (detail === 0) toggles.
+            if (hoverable && (e as MouseEvent).detail > 0) return;
+            group.getAttribute('data-open') === 'true' ? close() : open();
+          });
+          if (hoverable) {
+            group.addEventListener('mouseenter', open);
+            group.addEventListener('mouseleave', close);
+          }
+          // Close when keyboard focus leaves the group entirely.
+          group.addEventListener('focusout', (e) => {
+            if (!group.contains(e.relatedTarget as Node | null)) close();
+          });
+        });
+      }
+
+      // The current page's scroll-spy renderer (assigned by setupNav); the global
+      // scroll handler calls it so the page-bottom case can be re-evaluated.
+      let scrollSpyRender: () => void = () => {};
+
+      function setupNav() {
+        const nav = document.querySelector<HTMLElement>('.nav');
+        if (!nav) return;
+        nav.classList.add('js-enabled');
+        const toggle = nav.querySelector<HTMLButtonElement>('.nav-toggle');
+        const list = nav.querySelector<HTMLUListElement>('.nav-links');
+        if (toggle && list) {
+          toggle.addEventListener('click', () => {
+            const open = nav.getAttribute('data-open') === 'true';
+            nav.setAttribute('data-open', String(!open));
+            toggle.setAttribute('aria-expanded', String(!open));
+          });
+          list.addEventListener('click', (e) => {
+            if ((e.target as HTMLElement).closest('a')) {
+              nav.setAttribute('data-open', 'false');
+              toggle.setAttribute('aria-expanded', 'false');
+            }
+          });
+        }
+
+        setupDropdowns(nav);
+
+        const links = new Map<string, HTMLAnchorElement>();
+        nav.querySelectorAll<HTMLAnchorElement>('a[data-section]').forEach((a) => {
+          const id = a.dataset.section;
+          if (id) links.set(id, a);
+        });
+        const sections = [...links.keys()]
+          .map((id) => document.getElementById(id))
+          .filter((el): el is HTMLElement => el !== null);
+        scrollSpyRender = () => {};
+        if (sections.length && 'IntersectionObserver' in window) {
+          const triggers = nav.querySelectorAll<HTMLElement>('.nav-trigger');
+          // The lowest section can never scroll up into the observer's mid-viewport
+          // band, so we activate it explicitly once the page is scrolled to the end.
+          const lastId = sections.reduce((a, b) => (b.offsetTop > a.offsetTop ? b : a)).id;
+          let observedId: string | null = null;
+
+          const setActive = (id: string | null) => {
+            links.forEach((a) => {
+              a.classList.remove('is-active');
+              a.removeAttribute('aria-current');
+            });
+            triggers.forEach((t) => t.classList.remove('is-active'));
+            const a = id ? links.get(id) : undefined;
+            if (a) {
+              a.classList.add('is-active');
+              a.setAttribute('aria-current', 'true');
+              a.closest('.nav-group')?.querySelector<HTMLElement>('.nav-trigger')?.classList.add('is-active');
+            }
+          };
+
+          // At the page bottom force the last section active; otherwise follow the
+          // observer's pick (so scrolling back up off the bottom restores it).
+          const render = () => {
+            const doc = document.documentElement;
+            const atBottom =
+              doc.scrollHeight - window.innerHeight > 0 &&
+              window.scrollY + window.innerHeight >= doc.scrollHeight - 4;
+            setActive(atBottom ? lastId : observedId);
+          };
+
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) observedId = (entry.target as HTMLElement).id;
+              });
+              render();
+            },
+            { rootMargin: '-45% 0px -50% 0px', threshold: 0 }
+          );
+          sections.forEach((section) => observer.observe(section));
+          scrollSpyRender = render;
+          render();
+        }
+      }
+
+      function updateScrollUi() {
+        const progress = document.getElementById('scroll-progress');
+        const toTop = document.getElementById('back-to-top');
+        const st = window.scrollY || document.documentElement.scrollTop;
+        const h = document.documentElement.scrollHeight - window.innerHeight;
+        const pct = h > 0 ? Math.min(100, (st / h) * 100) : 0;
+        if (progress) progress.style.width = pct + '%';
+        if (toTop) toTop.classList.toggle('is-visible', st > 600);
+        // Re-evaluate scroll-spy so the page-bottom case (last section) updates too.
+        scrollSpyRender();
+      }
+
+      let lightboxOpener: HTMLElement | null = null;
+      function openLightbox(src: string, alt: string, opener: HTMLElement | null = null) {
+        const lb = document.getElementById('lightbox');
+        if (!lb || !src) return;
+        lightboxOpener = opener;
+        const img = lb.querySelector<HTMLImageElement>('.lightbox-img');
+        if (img) {
+          img.src = src;
+          img.alt = alt;
+        }
+        lb.classList.add('is-open');
+        lb.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        lb.querySelector<HTMLButtonElement>('.lightbox-close')?.focus();
+      }
+      function closeLightbox() {
+        const lb = document.getElementById('lightbox');
+        if (!lb || !lb.classList.contains('is-open')) return;
+        lb.classList.remove('is-open');
+        lb.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        // Return focus to whatever opened the lightbox (keyboard accessibility).
+        if (lightboxOpener) {
+          lightboxOpener.focus();
+          lightboxOpener = null;
+        }
+      }
+
+      // Hero scale-settle: the landing hero starts enlarged (~120%) and eases to
+      // its normal size (100%) as you scroll the first screen. Transform-only (no
+      // reflow); skipped for reduced-motion and on narrow screens.
+      let heroSettle = false;
+      function updateHeroScroll() {
+        if (!heroSettle) return;
+        const hero = document.querySelector<HTMLElement>('.hero');
+        const inner = hero?.querySelector<HTMLElement>('.hero-inner');
+        if (!hero || !inner) return;
+        const prog = Math.min(1, Math.max(0, window.scrollY / (hero.offsetHeight * 0.7 || 1)));
+        inner.style.transform = `scale(${1.2 - prog * 0.2})`;
+      }
+      function refreshHeroSettle() {
+        heroSettle =
+          !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+          window.matchMedia('(min-width: 768px)').matches;
+        const inner = document.querySelector<HTMLElement>('.hero .hero-inner');
+        if (!heroSettle) {
+          if (inner) {
+            inner.style.transform = '';
+            inner.style.opacity = '';
+          }
+        } else {
+          updateHeroScroll();
+        }
+      }
+
+      // Window/document listeners are bound once for the lifetime of the document
+      // (ClientRouter keeps the document; only the body content is swapped).
+      let globalBound = false;
+      function bindGlobalOnce() {
+        if (globalBound) return;
+        globalBound = true;
+        let ticking = false;
+        const onScroll = () => {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              updateScrollUi();
+              updateHeroScroll();
+              ticking = false;
+            });
+            ticking = true;
+          }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', () => {
+          setScrollPad();
+          updateScrollUi();
+          refreshHeroSettle();
+        });
+        document.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement;
+          // FLIP: when an ExpandableCard toggles, glide its neighbours to their new
+          // positions (transform only, no per-frame reflow) instead of letting them
+          // jump. The native <details> toggle proceeds normally below.
+          const flipSummary = target.closest('.xcard-summary');
+          if (flipSummary && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            const container = flipSummary.closest<HTMLElement>('.card-row, .card-grid');
+            if (container) {
+              const items = Array.from(container.children) as HTMLElement[];
+              const firstTops = items.map((el) => el.getBoundingClientRect().top);
+              requestAnimationFrame(() => {
+                items.forEach((el, i) => {
+                  const dy = firstTops[i] - el.getBoundingClientRect().top;
+                  if (dy) {
+                    el.style.transition = 'none';
+                    el.style.transform = `translateY(${dy}px)`;
+                  }
+                });
+                requestAnimationFrame(() => {
+                  items.forEach((el) => {
+                    if (el.style.transform) {
+                      el.style.transition = 'transform 0.25s ease';
+                      el.style.transform = '';
+                      el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
+                    }
+                  });
+                });
+              });
+            }
+          }
+          // Lightbox: backdrop/close click dismisses; a click on the image is ignored.
+          if (target.closest('.lightbox')) {
+            if (!target.closest('.lightbox-img')) closeLightbox();
+            return;
+          }
+          // Open from an explicit zoom source (e.g. a certificate diploma)…
+          const zoomSrc = target.closest<HTMLElement>('[data-zoom-src]');
+          if (zoomSrc) {
+            e.preventDefault();
+            openLightbox(zoomSrc.dataset.zoomSrc as string, zoomSrc.dataset.zoomAlt ?? '', zoomSrc);
+            return;
+          }
+          // …or from a zoomable image (detail-page figures, thumbnails, content images).
+          const zoomImg = target.closest<HTMLImageElement>(
+            '.project-thumb, .project-body img, .paper-body img, .role-hero img, .role-figure img, img.zoomable'
+          );
+          if (zoomImg && zoomImg.tagName === 'IMG') {
+            openLightbox(zoomImg.currentSrc || zoomImg.src, zoomImg.alt, zoomImg);
+            return;
+          }
+          if (target.closest('#back-to-top')) {
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+            return;
+          }
+          if (target.closest('.nav-menu a')) {
+            closeAllDropdowns();
+            return;
+          }
+          if (!target.closest('.nav-group')) closeAllDropdowns();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            closeLightbox();
+            closeAllDropdowns();
+          }
+        });
+      }
+
+      function init() {
+        setupReveal();
+        setScrollPad();
+        setupNav();
+        bindGlobalOnce();
+        updateScrollUi();
+        refreshHeroSettle();
+      }
+
+      document.addEventListener('astro:page-load', init);
+    </script>
+  </body>
+</html>

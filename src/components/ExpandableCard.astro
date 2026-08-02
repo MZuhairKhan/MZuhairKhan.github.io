@@ -1,0 +1,287 @@
+---
+interface CardLink {
+  label: string;
+  url: string;
+}
+
+interface Props {
+  title: string;
+  thumb: string;
+  meta?: string;
+  badge?: string;
+  body?: string;
+  links?: CardLink[];
+  detailHref?: string;
+  detailLabel?: string;
+  award?: string;
+  awardHref?: string;
+  imageCredit?: string;
+  imageCreditUrl?: string;
+  /** CSS aspect-ratio for the thumbnail (e.g. "1 / 1" to show a square image uncropped). Defaults to 8 / 5. */
+  thumbRatio?: string;
+  /** Logo shown on a tinted plate instead of a photo thumbnail (event/hackathon projects). */
+  logo?: string;
+  /** Optional second logo (e.g. challenge sponsor) shown beside the primary. */
+  subLogo?: string;
+  subLogoAlt?: string;
+}
+
+const {
+  title,
+  thumb,
+  meta,
+  badge,
+  body,
+  links = [],
+  detailHref,
+  detailLabel = 'Read more →',
+  award,
+  awardHref = '/awards',
+  imageCredit,
+  imageCreditUrl,
+  thumbRatio,
+  logo,
+  subLogo,
+  subLogoAlt,
+} = Astro.props;
+---
+
+<details class="xcard">
+  <summary class="xcard-summary">
+    <div class="xcard-thumbwrap" style={thumbRatio ? `--xcard-ratio: ${thumbRatio}` : undefined}>
+      {logo ? (
+        <div class="xcard-logoplate">
+          <img class="xcard-logoimg" src={logo} alt="" width="200" height="200" loading="lazy" decoding="async" />
+          {subLogo && <img class="xcard-logoimg" src={subLogo} alt={subLogoAlt ?? ''} width="200" height="200" loading="lazy" decoding="async" />}
+        </div>
+      ) : (
+        <img class="xcard-thumb" src={thumb} alt="" width="800" height="500" loading="lazy" decoding="async" />
+      )}
+      {
+        imageCredit &&
+          (imageCreditUrl ? (
+            <a class="xcard-credit" href={imageCreditUrl} target="_blank" rel="noopener">
+              {imageCredit}
+            </a>
+          ) : (
+            <span class="xcard-credit">{imageCredit}</span>
+          ))
+      }
+    </div>
+    <div class="xcard-head">
+      <span class="xcard-title">{title}</span>
+      {(meta || badge) && (
+        <div class="xcard-metarow">
+          {meta && <span class="xcard-meta">{meta}</span>}
+          {badge && <span class="xcard-badge">{badge}</span>}
+        </div>
+      )}
+      <span class="xcard-more">
+        <span class="xcard-more-label">Details</span>
+        <svg class="xcard-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </span>
+    </div>
+  </summary>
+  <div class="xcard-body">
+    {award && (
+      <a class="xcard-award" href={awardHref}>
+        <svg class="xcard-award-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"></path><path d="M7 5H4.5A1.5 1.5 0 0 0 3 6.5 3.5 3.5 0 0 0 6.5 10H7M17 5h2.5A1.5 1.5 0 0 1 21 6.5 3.5 3.5 0 0 1 17.5 10H17M9 21h6M12 14v7"></path></svg> {award}
+      </a>
+    )}
+    {body && <p class="xcard-text">{body}</p>}
+    {
+      (links.length > 0 || detailHref) && (
+        <div class="xcard-links">
+          {links.map((l) => (
+            <a href={l.url} target="_blank" rel="noopener">
+              {l.label} ↗
+            </a>
+          ))}
+          {detailHref && (
+            <a href={detailHref} class="xcard-readmore">
+              {detailLabel}
+            </a>
+          )}
+        </div>
+      )
+    }
+  </div>
+</details>
+
+<style>
+  .xcard {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-card);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .xcard:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 6px 18px rgba(70, 162, 71, 0.12);
+    transform: translateY(-3px);
+  }
+  .xcard[open] {
+    border-color: var(--color-accent);
+  }
+  .xcard-summary {
+    cursor: pointer;
+    list-style: none;
+    display: block;
+  }
+  .xcard-summary::-webkit-details-marker {
+    display: none;
+  }
+  .xcard-thumbwrap {
+    position: relative;
+  }
+  .xcard-thumb {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: var(--xcard-ratio, 8 / 5);
+    object-fit: cover;
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+  /* Logo plate: event/hackathon logos centred on a tinted panel in place of a photo. */
+  .xcard-logoplate {
+    aspect-ratio: var(--xcard-ratio, 8 / 5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-6);
+    padding: var(--space-6);
+    background: var(--color-accent-bg);
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+  .xcard-logoimg {
+    max-height: 68px;
+    max-width: 44%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    /* Blend any white logo background into the plate. */
+    mix-blend-mode: multiply;
+  }
+  .xcard-credit {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.62rem;
+    line-height: 1;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    text-decoration: none;
+  }
+  .xcard-credit:hover {
+    background: rgba(0, 0, 0, 0.7);
+    text-decoration: none;
+  }
+  .xcard-head {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .xcard-metarow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .xcard-title {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 1.02rem;
+    color: var(--color-text);
+    line-height: 1.3;
+    /* Reserve two lines so one- and two-line titles produce equal-height cards. */
+    min-height: 2.6em;
+  }
+  .xcard-badge {
+    flex: none;
+    margin-left: auto;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-accent-dark);
+    background: var(--color-accent-bg);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .xcard-meta {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-soft);
+  }
+  .xcard-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: var(--space-1);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+  }
+  .xcard-chevron {
+    transition: transform 0.2s ease;
+  }
+  .xcard[open] .xcard-chevron {
+    transform: rotate(180deg);
+  }
+  .xcard-body {
+    padding: 0 var(--space-4) var(--space-4);
+    animation: xcard-reveal 0.25s ease;
+  }
+  @keyframes xcard-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .xcard-award {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: var(--space-3);
+    padding: 0.2rem 0.6rem;
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+    background: var(--color-accent-bg);
+    border-radius: 999px;
+    text-decoration: none;
+  }
+  .xcard-award:hover {
+    text-decoration: none;
+    background: rgba(70, 162, 71, 0.14);
+  }
+  .xcard-text {
+    margin: 0 0 var(--space-3);
+    font-size: 0.95rem;
+    color: var(--color-text);
+  }
+  .xcard-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+  }
+  .xcard-readmore {
+    font-weight: 600;
+  }
+</style>

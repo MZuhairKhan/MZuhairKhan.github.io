@@ -1,0 +1,298 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const papers = await getCollection('papers', ({ data }) => !data.draft);
+  return papers.map((paper) => ({
+    params: { slug: paper.id },
+    props: { paper },
+  }));
+}
+
+const { paper } = Astro.props;
+const { Content } = await render(paper);
+
+const typeLabels: Record<string, string> = {
+  thesis: 'Thesis',
+  preprint: 'Preprint',
+  journal: 'Journal',
+  conference: 'Conference',
+  workshop: 'Workshop',
+};
+
+const year = paper.data.date.getFullYear();
+
+const bibType =
+  paper.data.type === 'thesis'
+    ? 'phdthesis'
+    : paper.data.type === 'journal'
+      ? 'article'
+      : paper.data.type === 'conference' || paper.data.type === 'workshop'
+        ? 'inproceedings'
+        : 'misc';
+const venueField = bibType === 'phdthesis' ? 'school' : bibType === 'article' ? 'journal' : 'booktitle';
+const lastName = paper.data.authors[0]?.split(' ').pop() ?? 'ref';
+const bibKey = `${lastName.toLowerCase()}${year}`;
+const bibtex = [
+  `@${bibType}{${bibKey},`,
+  `  title  = {${paper.data.title}},`,
+  `  author = {${paper.data.authors.join(' and ')}},`,
+  paper.data.venue ? `  ${venueField} = {${paper.data.venue}},` : null,
+  `  year   = {${year}},`,
+  paper.data.doi ? `  doi    = {${paper.data.doi}},` : null,
+  paper.data.url ? `  url    = {${paper.data.url}},` : null,
+  `}`,
+]
+  .filter(Boolean)
+  .join('\n');
+
+const paperLd = {
+  '@context': 'https://schema.org',
+  '@type': paper.data.type === 'thesis' ? 'Thesis' : 'ScholarlyArticle',
+  name: paper.data.title,
+  headline: paper.data.title,
+  author: paper.data.authors.map((n) => ({ '@type': 'Person', name: n })),
+  datePublished: paper.data.date.toISOString().slice(0, 10),
+  url: new URL(`/papers/${paper.id}`, Astro.site).href,
+  keywords: paper.data.tags.join(', '),
+  ...(paper.data.abstract ? { abstract: paper.data.abstract } : {}),
+  ...(paper.data.venue ? { publisher: { '@type': 'Organization', name: paper.data.venue } } : {}),
+  ...(paper.data.url ? { sameAs: paper.data.url } : {}),
+};
+
+const paperUrl = new URL(`/papers/${paper.id}`, Astro.site).href;
+const pubDate = paper.data.date.toISOString().slice(0, 10).replace(/-/g, '/');
+// Google Scholar reads citation_* meta from the <head>; emit what the data supports.
+const citation: { name: string; content: string }[] = [
+  { name: 'citation_title', content: paper.data.title },
+  ...paper.data.authors.map((a) => ({ name: 'citation_author', content: a })),
+  { name: 'citation_publication_date', content: pubDate },
+  ...(paper.data.venue
+    ? [{ name: paper.data.type === 'thesis' ? 'citation_dissertation_institution' : 'citation_journal_title', content: paper.data.venue }]
+    : []),
+  ...(paper.data.pdf ? [{ name: 'citation_pdf_url', content: new URL(paper.data.pdf, Astro.site).href }] : []),
+  ...(paper.data.doi ? [{ name: 'citation_doi', content: paper.data.doi }] : []),
+  { name: 'citation_abstract_html_url', content: paperUrl },
+];
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: Astro.site?.href },
+    { '@type': 'ListItem', position: 2, name: 'Papers', item: new URL('/papers', Astro.site).href },
+    { '@type': 'ListItem', position: 3, name: paper.data.title, item: paperUrl },
+  ],
+};
+---
+
+<BaseLayout title={`${paper.data.title} — Mohammad Zuhair Khan`} description={paper.data.abstract}>
+  <Fragment slot="head">
+    {citation.map((m) => <meta name={m.name} content={m.content} />)}
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(paperLd)} />
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbLd)} />
+  </Fragment>
+  <article class="section">
+    <div class="container paper-page">
+      <a href="/papers" class="back-link">← Back to papers</a>
+
+      <span class="type-badge">{typeLabels[paper.data.type] ?? paper.data.type}</span>
+      <h1 class="paper-title">{paper.data.title}</h1>
+
+      <p class="paper-authors">{paper.data.authors.join(', ')}</p>
+      <p class="paper-meta">
+        {paper.data.venue && <span>{paper.data.venue}</span>}
+        <span> · {year}</span>
+      </p>
+
+      {paper.data.logo && (
+        <div class="paper-logos">
+          {paper.data.subLogoUrl ? (
+            <a href={paper.data.subLogoUrl} target="_blank" rel="noopener" aria-label={paper.data.venue}>
+              <img src={paper.data.logo} alt={paper.data.venue ?? 'Institution'} width="40" height="40" loading="lazy" decoding="async" />
+            </a>
+          ) : (
+            <img src={paper.data.logo} alt={paper.data.venue ?? 'Institution'} width="40" height="40" loading="lazy" decoding="async" />
+          )}
+          {paper.data.subLogo &&
+            (paper.data.subLogoUrl ? (
+              <a href={paper.data.subLogoUrl} target="_blank" rel="noopener" aria-label={paper.data.subLogoAlt}>
+                <img src={paper.data.subLogo} alt={paper.data.subLogoAlt ?? ''} width="40" height="40" loading="lazy" decoding="async" />
+              </a>
+            ) : (
+              <img src={paper.data.subLogo} alt={paper.data.subLogoAlt ?? ''} width="40" height="40" loading="lazy" decoding="async" />
+            ))}
+        </div>
+      )}
+
+      {paper.data.tags.length > 0 && (
+        <div class="paper-tags">
+          {paper.data.tags.map((t) => <span class="tag">{t}</span>)}
+        </div>
+      )}
+
+      <div class="paper-links">
+        {paper.data.url && <a class="button button-ghost" href={paper.data.url} target="_blank" rel="noopener">View on publisher ↗</a>}
+        {paper.data.pdf && <a class="button button-ghost" href={paper.data.pdf} target="_blank" rel="noopener">PDF</a>}
+        {paper.data.doi && <a class="button button-ghost" href={`https://doi.org/${paper.data.doi}`} target="_blank" rel="noopener">DOI</a>}
+      </div>
+
+      <details class="cite">
+        <summary>Cite (BibTeX)</summary>
+        <div class="cite-body">
+          <button class="cite-copy" type="button" data-cite-copy>Copy</button>
+          <pre><code class="bibtex">{bibtex}</code></pre>
+        </div>
+      </details>
+
+      {paper.data.abstract && (
+        <section class="abstract">
+          <h2>Abstract</h2>
+          <p>{paper.data.abstract}</p>
+        </section>
+      )}
+
+      <section class="paper-body">
+        <Content />
+      </section>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .paper-page {
+    max-width: 48rem;
+  }
+  .back-link {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    display: inline-block;
+    margin-bottom: var(--space-6);
+  }
+  .type-badge {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-accent-dark);
+    background: var(--color-accent-bg);
+    padding: 0.2rem 0.7rem;
+    border-radius: 4px;
+    margin-bottom: var(--space-3);
+  }
+  .paper-title {
+    margin: 0 0 var(--space-3) 0;
+  }
+  .paper-authors {
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    margin: 0 0 var(--space-2) 0;
+  }
+  .paper-meta {
+    font-family: var(--font-sans);
+    color: var(--color-soft);
+    margin: 0 0 var(--space-4) 0;
+    font-size: 0.95rem;
+  }
+  .paper-logos {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .paper-logos img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+  .paper-tags {
+    margin-bottom: var(--space-6);
+  }
+  .paper-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-8);
+  }
+  .abstract {
+    background: var(--color-accent-bg);
+    border-left: 3px solid var(--color-accent);
+    padding: var(--space-4) var(--space-6);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    margin-bottom: var(--space-6);
+  }
+  .abstract h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-accent-dark);
+    margin: 0 0 var(--space-2) 0;
+  }
+  .abstract p {
+    margin: 0;
+  }
+  .paper-body {
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+  .cite {
+    margin-bottom: var(--space-8);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-card);
+  }
+  .cite summary {
+    cursor: pointer;
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+  }
+  .cite-body {
+    position: relative;
+    border-top: 1px solid var(--color-border-soft);
+  }
+  .cite-body pre {
+    margin: 0;
+    padding: var(--space-4);
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+  .cite-copy {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+  }
+</style>
+
+<script>
+  function setupCite() {
+    document.querySelectorAll<HTMLButtonElement>('[data-cite-copy]').forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', async () => {
+        const code = btn.parentElement?.querySelector('code');
+        if (!code || !navigator.clipboard) return;
+        try {
+          await navigator.clipboard.writeText(code.textContent ?? '');
+          const original = btn.textContent;
+          btn.textContent = 'Copied';
+          setTimeout(() => {
+            btn.textContent = original;
+          }, 1500);
+        } catch {
+          /* clipboard unavailable */
+        }
+      });
+    });
+  }
+  document.addEventListener('astro:page-load', setupCite);
+</script>

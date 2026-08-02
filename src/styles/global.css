@@ -1,0 +1,777 @@
+/* Computer Modern (Latin Modern) — the typeface of the source LaTeX CV.
+   Self-hosted woff2 (OFL, see /fonts/OFL.txt). The package ships only two
+   physical weights, so 400–500 map to the regular face and 600–700 to bold. */
+@font-face {
+  font-family: 'CMU Serif';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/cmu-serif-500-roman.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'CMU Serif';
+  font-style: italic;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/cmu-serif-500-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'CMU Serif';
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+  src: url('/fonts/cmu-serif-700-roman.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'CMU Serif';
+  font-style: italic;
+  font-weight: 600 700;
+  font-display: swap;
+  src: url('/fonts/cmu-serif-700-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'CMU Typewriter Text';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/cmu-typewriter-text-500-roman.woff2') format('woff2');
+}
+
+:root {
+  color-scheme: light;
+  /* Decorative accent — the CV's Overleaf green (matches CV.cls). Used for
+     underlines, rings, fills, borders, glows. NOT for text/buttons (see -dark). */
+  --color-accent: #46a247;
+  --color-accent-light: #5cb85c;
+  /* Interactive green — links, buttons, badge/eyebrow text. White-on-this is AA. */
+  --color-accent-dark: #2a6a2a;
+  --color-accent-bg: rgba(70, 162, 71, 0.06);
+  /* Stronger fill + hairline border so pills read as chips, not text on cream. */
+  --color-tag-bg: rgba(70, 162, 71, 0.1);
+  --color-tag-border: rgba(70, 162, 71, 0.2);
+  --color-text: #1a1a1a;
+  /* Secondary text — darkened from #5e5e5e for more presence in CMU's thin strokes. */
+  --color-soft: #4a4a44;
+  /* Darkened from #8a8a85 (3.31:1) to meet WCAG AA (~4.6:1 on the page bg). */
+  --color-muted: #6b6b66;
+  --color-bg: #fafaf6;
+  /* ~2.5% deeper warm cream for alternating section bands. */
+  --color-bg-alt: #f3f1e8;
+  --color-card: #ffffff;
+  --color-border: #e5e3dc;
+  --color-border-soft: #efede5;
+  --color-header-bg: rgba(250, 250, 246, 0.92);
+
+  /* Solid-button tokens: white-on-#2a6a2a is 6.58:1 (passes AA). */
+  --color-btn-bg: #2a6a2a;
+  --color-btn-bg-hover: #21521f;
+  --color-btn-text: #ffffff;
+
+  /* Whole-site Computer Modern, matching the LaTeX CV. --font-sans keeps its
+     name (used widely for UI/headings) but now resolves to the same serif. */
+  --font-serif: 'CMU Serif', Georgia, 'Times New Roman', serif;
+  --font-sans: 'CMU Serif', Georgia, 'Times New Roman', serif;
+  --font-mono: 'CMU Typewriter Text', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --max-width: 64rem;
+  --radius: 6px;
+  /* Warm, slightly deeper shadow so white cards float above the cream. */
+  --shadow: 0 1px 3px rgba(58, 50, 30, 0.07);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  /* Reserve space for the scrollbar on every page so short pages (e.g. /papers)
+     don't shift content right when the vertical scrollbar disappears. */
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-text);
+  margin: 0 0 var(--space-4) 0;
+}
+
+h1 { font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.75rem; letter-spacing: -0.015em; }
+h3 { font-size: 1.125rem; }
+
+/* Typeset line-breaking: balance short blocks (headings, quotes, captions) and
+   trim orphans in running prose — emulates LaTeX line-breaking. */
+h1, h2, h3, .section-title--feature, .entry-title, .about-quote, figcaption {
+  text-wrap: balance;
+}
+p, li {
+  text-wrap: pretty;
+}
+
+p {
+  margin: 0 0 var(--space-4) 0;
+}
+
+a {
+  color: var(--color-accent-dark);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+ul {
+  margin: 0;
+  padding-left: var(--space-6);
+}
+
+ul li {
+  margin-bottom: var(--space-2);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--color-accent-bg);
+  padding: 0.125em 0.375em;
+  border-radius: 3px;
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.section {
+  padding: var(--space-16) 0;
+}
+
+/* Alternating warm-cream bands chunk the long single-page scroll into "acts".
+   Applied by id — these sections exist only on the home page. About stays on the
+   plain page cream so it flows out of the hero's faded base; the rest alternate
+   plain/cream from Education down.
+   NOTE: this list is positional, so it must be re-checked whenever the homepage
+   order in `src/pages/index.astro` changes. Current order is:
+   about · education · experience · leadership · projects · publications ·
+   talks · achievements · skills · contact. */
+#education,
+#leadership,
+#publications,
+#achievements,
+#contact {
+  background: var(--color-bg-alt);
+}
+
+/* Two-tier rhythm: extra air on the section that opens each of the three
+   narrative blocks — Background, Work, Recognition — so the grouping reads
+   without needing headers. Positional too; re-check alongside the list above. */
+#education,
+#projects,
+#achievements {
+  padding-top: 6rem;
+}
+
+/* Scroll-reveal: sections fade/slide in as they enter the viewport.
+   The hidden initial state is applied only when JS adds .reveal-on to <html>
+   (and only when the user has not requested reduced motion), so no-JS and
+   reduced-motion visitors always see fully-visible content. */
+.reveal-on .section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.reveal-on .section.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Hero entrance: the eyebrow, name, tagline, pitch, meta, pills, actions and
+   portrait fade and rise in sequence on first load — one orchestrated moment. */
+.reveal-on .hero .hero-text > *,
+.reveal-on .hero .hero-photo-wrap {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-on .hero.is-visible .hero-text > *,
+.reveal-on .hero.is-visible .hero-photo-wrap {
+  opacity: 1;
+  transform: none;
+}
+.reveal-on .hero.is-visible .hero-photo-wrap { transition-delay: 0.15s; }
+.reveal-on .hero.is-visible .hero-text > *:nth-child(1) { transition-delay: 0.05s; }
+.reveal-on .hero.is-visible .hero-text > *:nth-child(2) { transition-delay: 0.12s; }
+.reveal-on .hero.is-visible .hero-text > *:nth-child(3) { transition-delay: 0.19s; }
+.reveal-on .hero.is-visible .hero-text > *:nth-child(4) { transition-delay: 0.26s; }
+.reveal-on .hero.is-visible .hero-text > *:nth-child(5) { transition-delay: 0.33s; }
+.reveal-on .hero.is-visible .hero-text > *:nth-child(6) { transition-delay: 0.40s; }
+.reveal-on .hero.is-visible .hero-text > *:nth-child(7) { transition-delay: 0.47s; }
+
+/* Skill bars fill from empty when the Skills section scrolls into view. */
+.reveal-on #skills:not(.is-visible) .skill-fill {
+  width: 0;
+}
+.reveal-on #skills.is-visible .skillbar:nth-of-type(2) .skill-fill { transition-delay: 0.05s; }
+.reveal-on #skills.is-visible .skillbar:nth-of-type(3) .skill-fill { transition-delay: 0.1s; }
+.reveal-on #skills.is-visible .skillbar:nth-of-type(4) .skill-fill { transition-delay: 0.15s; }
+.reveal-on #skills.is-visible .skillbar:nth-of-type(5) .skill-fill { transition-delay: 0.2s; }
+.reveal-on #skills.is-visible .skillbar:nth-of-type(6) .skill-fill { transition-delay: 0.25s; }
+
+/* Staggered cascade: repeating items (cards, timeline entries) rise in sequence
+   as their section reveals, for a livelier scroll-in than a single block fade. */
+.reveal-on :is(.card-row, .card-grid, .papers-grid) > *,
+.reveal-on .timeline > .entry {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.reveal-on .section.is-visible :is(.card-row, .card-grid, .papers-grid) > *,
+.reveal-on .section.is-visible .timeline > .entry {
+  opacity: 1;
+  transform: none;
+}
+.reveal-on .section.is-visible :is(.card-row, .card-grid, .papers-grid) > *:nth-child(2),
+.reveal-on .section.is-visible .timeline > .entry:nth-child(2) {
+  transition-delay: 0.05s;
+}
+.reveal-on .section.is-visible :is(.card-row, .card-grid, .papers-grid) > *:nth-child(3),
+.reveal-on .section.is-visible .timeline > .entry:nth-child(3) {
+  transition-delay: 0.1s;
+}
+.reveal-on .section.is-visible :is(.card-row, .card-grid, .papers-grid) > *:nth-child(4),
+.reveal-on .section.is-visible .timeline > .entry:nth-child(4) {
+  transition-delay: 0.15s;
+}
+.reveal-on .section.is-visible :is(.card-row, .card-grid, .papers-grid) > *:nth-child(5),
+.reveal-on .section.is-visible .timeline > .entry:nth-child(5) {
+  transition-delay: 0.2s;
+}
+.reveal-on .section.is-visible :is(.card-row, .card-grid, .papers-grid) > *:nth-child(n + 6),
+.reveal-on .section.is-visible .timeline > .entry:nth-child(n + 6) {
+  transition-delay: 0.25s;
+}
+
+.section-title {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--color-accent-dark);
+  margin: 0 0 var(--space-6) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-accent);
+  display: inline-block;
+}
+
+/* Larger, dark serif headline for the one featured section. */
+.section-title--feature {
+  font-size: clamp(1.5rem, 3vw, 1.85rem);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+  border-bottom-width: 2px;
+  padding-bottom: var(--space-3);
+}
+
+/* Section heading row with a "View all" link on the right. */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.view-all {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Responsive 3-up card row (talks / projects / awards). */
+.card-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .card-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .card-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.entry {
+  position: relative;
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding: var(--space-4) 0;
+  padding-left: var(--space-8);
+  margin-bottom: var(--space-6);
+}
+
+/* Timeline: a continuous vertical rail with a ring-node at each entry.
+   --tl-node-top positions the node against the entry title; the rail
+   caps to the node centre so it starts and ends cleanly. */
+.timeline {
+  --tl-node-top: 1.4rem;
+}
+.timeline .entry::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 0;
+  bottom: calc(-1 * var(--space-6));
+  width: 2px;
+  /* Softened accent rail — visible on cream, but lets the full-accent ring-nodes
+     lead. */
+  background: rgba(70, 162, 71, 0.45);
+}
+.timeline .entry:first-child::before {
+  top: calc(var(--tl-node-top) + 6px);
+}
+.timeline .entry:last-child::before {
+  bottom: auto;
+  height: calc(var(--tl-node-top) + 6px);
+}
+.timeline .entry::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: var(--tl-node-top);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 2px solid var(--color-accent);
+  box-sizing: border-box;
+}
+.entry-logo {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  /* Logos sit directly on the page; multiply blends a white logo background into it. */
+  mix-blend-mode: multiply;
+}
+/* Logo column: primary logo, with any secondary (sub-affiliation) logo stacked
+   directly beneath at the same size. */
+.entry-logo-stack {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.entry-logo-link {
+  display: block;
+  line-height: 0;
+  transition: opacity 0.15s ease;
+}
+.entry-logo-link:hover {
+  opacity: 0.72;
+}
+.entry-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entry-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.entry-title {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--color-text);
+}
+
+.entry-context {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--color-soft);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.entry-meta {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--color-soft);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* Entries that are still current ("… – Present") mark themselves on the rail
+   rather than after the date: the hollow timeline node fills in and pulses,
+   echoing the hero availability ping. Putting it on the node means the live
+   role is findable by scanning the timeline itself, and the date column stays
+   clean. The word "Present" still carries the meaning; the node is decorative.
+   Reduced-motion: the global `*, ::before, ::after` block holds it solid. */
+.timeline .entry.is-current::after {
+  background: var(--color-accent);
+  animation: node-ping 2.6s ease-out infinite;
+}
+@keyframes node-ping {
+  0% { box-shadow: 0 0 0 0 rgba(70, 162, 71, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(70, 162, 71, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(70, 162, 71, 0); }
+}
+
+.entry-org {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--color-soft);
+  margin-bottom: var(--space-2);
+}
+
+.entry-bullets {
+  margin-top: var(--space-2);
+  max-width: 52rem;
+}
+
+.entry-bullets li {
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}
+
+/* "More detail →" link to a timeline entry's dedicated page. */
+.entry-more {
+  display: inline-block;
+  margin-top: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Multiple roles grouped under one company (shared logo + timeline node). */
+.entry-roles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-top: var(--space-1);
+}
+.entry-role-title {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.08rem;
+  color: var(--color-text);
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--color-tag-bg);
+  border: 1px solid var(--color-tag-border);
+  color: var(--color-accent-dark);
+  margin-right: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.muted {
+  color: var(--color-soft);
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+button,
+.button {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  background: var(--color-btn-bg);
+  color: var(--color-btn-text);
+  border: 1px solid var(--color-btn-bg);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: all 0.15s ease;
+}
+
+.button:hover {
+  background: var(--color-btn-bg-hover);
+  border-color: var(--color-btn-bg-hover);
+  color: var(--color-btn-text);
+  text-decoration: none;
+}
+
+.button-ghost {
+  background: transparent;
+  color: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+}
+
+.button-ghost:hover {
+  background: var(--color-accent-bg);
+  color: var(--color-accent-dark);
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: var(--space-12) 0;
+  }
+  #experience,
+  #publications,
+  #leadership {
+    padding-top: var(--space-16);
+  }
+  /* No-JS fallback: the stacked mobile header is taller than 5rem. JS refines this. */
+  html {
+    scroll-padding-top: 7rem;
+  }
+}
+
+/* Click-to-zoom: detail-page figures, thumbnails and content images open in a
+   lightbox rather than a new tab. */
+.project-thumb,
+.project-body img,
+.paper-body img,
+.role-hero img,
+.role-figure img,
+img.zoomable,
+.cert-zoom {
+  cursor: zoom-in;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4vmin;
+  background: rgba(20, 20, 16, 0.84);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s;
+  cursor: zoom-out;
+}
+.lightbox.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+.lightbox-img {
+  max-width: min(90vw, 1100px);
+  max-height: 86vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius);
+  background: var(--color-card);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+.lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.lightbox-close:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Keyboard focus — visible, consistent indicator on all interactive elements. */
+:focus-visible {
+  outline: 2px solid var(--color-accent-dark);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+  /* Cream halo so the ring reads with equal strength on cream bands, white cards,
+     and green buttons (the ring shows against the surface either way). */
+  box-shadow: 0 0 0 4px var(--color-bg);
+}
+
+/* Skip-to-content link: off-screen until focused. */
+.skip-link {
+  position: absolute;
+  left: var(--space-3);
+  top: -3rem;
+  z-index: 200;
+  padding: 0.5rem 1rem;
+  background: var(--color-btn-bg);
+  color: var(--color-btn-text);
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: var(--space-3);
+  text-decoration: none;
+  color: var(--color-btn-text);
+}
+
+main:focus {
+  outline: none;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Belt-and-braces: disable cross-page view-transition morphs (e.g. the brand
+     wordmark). Astro's ClientRouter already honours reduced motion. */
+  ::view-transition-group(*) {
+    animation: none !important;
+  }
+}
+
+/* Print-only contact header (hidden on screen; shown at the top of the printout). */
+.print-contact {
+  display: none;
+}
+
+/* Print: strip chrome, force readable black-on-white single column — a clean
+   Save-as-PDF / one-page CV handout. */
+@media print {
+  @page {
+    margin: 18mm;
+  }
+  .site-header,
+  .site-footer,
+  .skip-link,
+  .hero-actions,
+  .contact-buttons,
+  .scroll-progress,
+  .back-to-top {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+  /* Clean black-on-white: neutralise the decorative green field, section bands and
+     glow, and reset the JS hero scale so the hero prints flat and un-clipped. */
+  .hero {
+    min-height: auto !important;
+    background: #fff !important;
+    background-image: none !important;
+  }
+  .hero-inner {
+    transform: none !important;
+  }
+  .hero::after,
+  .hero-photo-wrap::before {
+    display: none !important;
+  }
+  section[id] {
+    background: #fff !important;
+  }
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+  /* Make external links self-contained on paper by printing their URL. */
+  main a[href^="http"]::after {
+    content: ' (' attr(href) ')';
+    font-size: 9pt;
+    color: #000;
+    word-break: break-all;
+  }
+  .print-contact {
+    display: block;
+    margin: 0 0 var(--space-4);
+    font-family: var(--font-sans);
+    font-size: 10pt;
+    color: #000;
+  }
+  .section {
+    border-top: none;
+    padding: 0.5rem 0;
+  }
+  .entry,
+  .xcard,
+  .paper-card,
+  .project-card,
+  .about-quote {
+    border-color: #999 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  .container {
+    max-width: none;
+  }
+}
+

@@ -1,0 +1,50 @@
+---
+import { getCollection } from 'astro:content';
+import PaperCard from './PaperCard.astro';
+
+const featured = (await getCollection('papers', ({ data }) => !data.draft && data.featured)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+---
+
+{
+  featured.length > 0 && (
+    <section id="publications" class="section">
+      <div class="container">
+        <h2 class="section-title">Publications</h2>
+        <div class="papers-grid">
+          {featured.map((paper) => (
+            <PaperCard
+              title={paper.data.title}
+              authors={paper.data.authors}
+              venue={paper.data.venue}
+              year={paper.data.date.getFullYear()}
+              type={paper.data.type}
+              href={`/papers/${paper.id}`}
+              tags={paper.data.tags}
+              logo={paper.data.logo}
+              subLogo={paper.data.subLogo}
+              subLogoAlt={paper.data.subLogoAlt}
+            />
+          ))}
+        </div>
+        <p class="see-all">
+          <a href="/papers">All papers →</a>
+        </p>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .papers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-4);
+  }
+  .see-all {
+    margin: var(--space-4) 0 0;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+  }
+</style>

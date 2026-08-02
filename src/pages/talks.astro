@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ExpandableCard from '../components/ExpandableCard.astro';
+import { talks } from '../data/talks';
+import { profile } from '../data/profile';
+
+const MONTHS: Record<string, string> = {
+  Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
+  Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12',
+};
+// "Mon YYYY" -> "YYYY-MM" for schema.org startDate (omit if unparseable).
+const startDate = (d?: string): string | undefined => {
+  if (!d) return undefined;
+  const [mon, year] = d.split(' ');
+  return MONTHS[mon] && year ? `${year}-${MONTHS[mon]}` : undefined;
+};
+// Each talk as a schema.org Event with the author as performer.
+const talkLd = talks.map((t) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: t.title,
+  description: t.description,
+  ...(startDate(t.date) ? { startDate: startDate(t.date) } : {}),
+  eventAttendanceMode:
+    t.location === 'Online'
+      ? 'https://schema.org/OnlineEventAttendanceMode'
+      : 'https://schema.org/OfflineEventAttendanceMode',
+  ...(t.location
+    ? {
+        location:
+          t.location === 'Online'
+            ? { '@type': 'VirtualLocation', ...(t.url ? { url: t.url } : {}) }
+            : { '@type': 'Place', name: t.location },
+      }
+    : {}),
+  ...(t.event ? { superEvent: { '@type': 'Event', name: t.event } } : {}),
+  organizer: { '@type': 'Organization', name: t.venue },
+  performer: { '@type': 'Person', name: profile.fullName },
+  ...(t.url ? { url: t.url } : {}),
+}));
+---
+
+<BaseLayout title="Talks — Mohammad Zuhair Khan" description="Invited talks, tutorials, and presentations by Mohammad Zuhair Khan.">
+  <Fragment slot="head">
+    {talkLd.map((ld) => <script type="application/ld+json" is:inline set:html={JSON.stringify(ld)} />)}
+  </Fragment>
+  <section class="section">
+    <div class="container">
+      <a href="/#talks" class="back-link">← Back home</a>
+      <h1 class="section-title">Talks &amp; Presentations</h1>
+      <p class="page-intro">Invited talks, tutorials, and presentations. Click any card for details.</p>
+      <div class="card-grid">
+        {
+          talks.map((talk) => (
+            <ExpandableCard
+              title={talk.title}
+              thumb={talk.image}
+              thumbRatio={talk.imageRatio}
+              meta={[talk.venue, talk.event, talk.date].filter(Boolean).join(' · ')}
+              badge={talk.role}
+              body={talk.description}
+              links={[
+                ...(talk.links?.map((l) => ({ label: l.label, url: l.url })) ?? []),
+                ...(talk.url ? [{ label: 'Event page', url: talk.url }] : []),
+              ]}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .back-link {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    display: block;
+    width: fit-content;
+    margin-bottom: var(--space-4);
+  }
+  .page-intro {
+    color: var(--color-soft);
+    margin-bottom: var(--space-8);
+    max-width: 40rem;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+    align-items: start;
+  }
+</style>

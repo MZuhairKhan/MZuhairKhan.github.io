@@ -1,0 +1,43 @@
+---
+import { achievements } from '../data/achievements';
+import ExpandableCard from './ExpandableCard.astro';
+
+const top = achievements.slice(0, 3);
+---
+
+<section id="achievements" class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="section-title">Achievements &amp; Awards</h2>
+      <a class="view-all" href="/awards">View all awards →</a>
+    </div>
+    <div class="card-row">
+      {
+        top.map((a) => {
+          const detailHref = a.slug ? `/awards/${a.slug}` : a.projectId ? `/projects/${a.projectId}` : undefined;
+          const detailLabel = a.slug ? 'View details →' : 'View project →';
+          return (
+            <ExpandableCard
+              title={a.title}
+              thumb={a.image}
+              logo={a.logo}
+              thumbRatio={a.thumbRatio}
+              meta={a.org}
+              badge={a.result}
+              body={a.description}
+              imageCredit={a.imageCredit}
+              imageCreditUrl={a.imageCreditUrl}
+              links={[
+                ...(a.url ? [{ label: 'Details', url: a.url }] : []),
+                ...(a.credlyUrl ? [{ label: 'Verify on Credly', url: a.credlyUrl }] : []),
+                ...(a.repo ? [{ label: 'View code', url: a.repo }] : []),
+              ]}
+              detailHref={detailHref}
+              detailLabel={detailLabel}
+            />
+          );
+        })
+      }
+    </div>
+  </div>
+</section>

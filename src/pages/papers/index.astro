@@ -1,0 +1,63 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PaperCard from '../../components/PaperCard.astro';
+
+const papers = (await getCollection('papers', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title="Papers — Mohammad Zuhair Khan" description="Papers and theses by Mohammad Zuhair Khan.">
+  <section class="section">
+    <div class="container">
+      <a href="/#publications" class="back-link">← Back home</a>
+      <h1 class="section-title">Papers</h1>
+      <p class="page-intro">Research outputs, theses, and writing.</p>
+
+      {papers.length === 0 ? (
+        <p class="empty">No papers yet — check back soon.</p>
+      ) : (
+        <div class="papers-grid">
+          {papers.map((paper) => (
+            <PaperCard
+              title={paper.data.title}
+              authors={paper.data.authors}
+              venue={paper.data.venue}
+              year={paper.data.date.getFullYear()}
+              type={paper.data.type}
+              href={`/papers/${paper.id}`}
+              tags={paper.data.tags}
+              logo={paper.data.logo}
+              subLogo={paper.data.subLogo}
+              subLogoAlt={paper.data.subLogoAlt}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .back-link {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    display: block;
+    width: fit-content;
+    margin-bottom: var(--space-4);
+  }
+  .page-intro {
+    color: var(--color-soft);
+    margin-bottom: var(--space-8);
+    max-width: 40rem;
+  }
+  .papers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-4);
+  }
+  .empty {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+</style>

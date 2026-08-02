@@ -1,0 +1,31 @@
+---
+import RoleDetail from '../../components/RoleDetail.astro';
+import { experience } from '../../data/experience';
+
+export function getStaticPaths() {
+  return experience
+    .filter((entry) => entry.slug)
+    .map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const description = entry.bullets[0] ?? `${entry.role} at ${entry.org}.`;
+---
+
+<RoleDetail
+  title={`${entry.role}, ${entry.org} — Mohammad Zuhair Khan`}
+  description={description}
+  role={entry.role}
+  context={entry.context}
+  org={entry.org}
+  orgUrl={entry.orgUrl}
+  period={entry.period}
+  logo={entry.logo}
+  bullets={entry.bullets}
+  detail={entry.detail}
+  heroImage={entry.heroImage}
+  images={entry.images}
+  links={entry.links}
+  backHref="/#experience"
+  backLabel="Back to experience"
+/>
