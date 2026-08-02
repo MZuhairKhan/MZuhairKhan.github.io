@@ -447,25 +447,42 @@ const personLd = {
         .nav.js-enabled .nav-links {
           display: none;
         }
+        /* Rows carry their own padding instead of the list carrying a gap: a gap
+           would only fall between <li>s, so the group wrappers left the drawer
+           with 42px steps inside a former group and 50px across one. Padding also
+           takes each row to ~44px, the minimum comfortable touch target — the
+           gapped version gave roughly 22px of tappable height. */
         .nav.js-enabled[data-open='true'] .nav-links {
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
-          gap: var(--space-3);
+          align-items: stretch;
+          gap: 0;
           padding-bottom: var(--space-2);
         }
-        /* In the mobile drawer the dropdowns are expanded inline, not floating. */
-        .nav-group {
+        /* The drawer is a single flat column of destinations — the Background /
+           Showcase / Recognition headers exist to keep the desktop bar short, and
+           on mobile there is no bar to keep short. Dropping them avoids rendering
+           three inert labels the user cannot tap.
+           The `> li.nav-group` selector is deliberate: `.nav-links > li` sets
+           display:flex at (0,1,1), so a bare `.nav-group` at (0,1,0) loses to it
+           even in here — media queries add no specificity. That mismatch is what
+           put each trigger beside its own menu as two columns. */
+        .nav-links > li.nav-group {
           display: block;
           width: 100%;
         }
-        .nav-trigger {
-          width: 100%;
+        /* global.css sets `ul li { margin-bottom: 8px }` for prose lists. In the
+           drawer it applies twice over — once between rows and again inside each
+           former group — which is what left 52px steps within a group and 60px
+           across one, even after the flex gaps were zeroed. */
+        .nav-links li {
+          margin: 0;
         }
-        .nav-caret {
+        .nav-trigger {
           display: none;
         }
-        .nav-menu {
+        .nav-menu,
+        .nav-group[data-open='false'] .nav-menu {
           position: static;
           opacity: 1;
           visibility: visible;
@@ -473,12 +490,35 @@ const personLd = {
           box-shadow: none;
           border: none;
           background: transparent;
+          border-radius: 0;
           min-width: 0;
-          margin: var(--space-1) 0 0;
-          padding: 0 0 0 var(--space-4);
+          margin: 0;
+          padding: 0;
+          gap: 0;
         }
+        /* Hover bridge for the floating desktop menu; meaningless once static. */
+        .nav-menu::before {
+          display: none;
+        }
+        /* Every drawer row, whether it was top-level or a group child, is one
+           uniform full-width tap target. Former children also rendered a size
+           larger than top-level items; once flattened they sit in one list. */
+        .nav-links a,
         .nav-menu a {
-          padding: 0.3rem 0;
+          display: block;
+          width: 100%;
+          padding: 0.7rem 0;
+          font-size: 0.9rem;
+          border-bottom: none;
+        }
+        /* The desktop active state is a bottom border, which on a full-width row
+           would read as a divider. Use the accent text colour alone. */
+        .nav-links a.is-active,
+        .nav-links a[aria-current='page'],
+        .nav-menu a.is-active,
+        .nav-menu a[aria-current='page'] {
+          background: transparent;
+          color: var(--color-accent-dark);
         }
         .back-to-top {
           bottom: var(--space-4);
