@@ -20,7 +20,7 @@ canonical tags and a `/CNAME` file. It will not answer on `zuhair.fi` until the 
 
 GitHub has **not** registered the custom domain yet (`cname: null`). That is expected and
 correct: the DNS check cannot pass while the records point elsewhere. Change the records
-first, then [3.3](#33-set-the-domain-in-github).
+first, then [3.5](#35-set-the-domain-in-github).
 
 > **The one step that silently half-breaks the launch:** replacing the A records but not the
 > **AAAA** records. IPv6 visitors — most mobile networks — would keep landing on Zoner's
@@ -251,69 +251,110 @@ The workflow runs three jobs in sequence: `check` (astro check) → `build`
 
 ## Part 3 — DNS at Zoner
 
-### 3.1 What is there now
+### 3.1 How Zoner's panel works — read this first
 
-`zuhair.fi` currently resolves to Zoner's parking page ("Under construction"):
+Zoner does not let you delete the records that point at its own hosting. The panel states:
 
-| Type | Name | Current value | Action |
-|---|---|---|---|
-| A | `zuhair.fi` | `5.249.230.99` | **replace** |
-| AAAA | `zuhair.fi` | `2a02:2350:c:400:801b:425a:3b4f:3752` | **replace** |
-| A | `www` | `5.249.230.99` | **replace with CNAME** |
-| AAAA | `www` | `2a02:2350:c:400:801b:425a:3b4f:3752` | **delete** |
-| MX | `zuhair.fi` | `mx1.zoner.fi`, `mx2.zoner.fi` (pref 0) | **⚠ KEEP** |
+> *These are the DNS records for your domain. Our default records are hidden to ensure
+> optimal performance of your products. **You can deactivate them by creating a new record
+> of the same type.** If you remove your custom record, the default record becomes active
+> again.*
 
-> **Do not delete the MX records.** If you have or plan to have `@zuhair.fi` email through
-> Zoner, removing them kills mail delivery. They are independent of web hosting — changing
-> A/AAAA does not affect them.
->
-> Equally: leaving the **old AAAA records in place** is the classic way to break this
-> migration. Any visitor on IPv6 — most mobile networks — would still hit Zoner's parking
-> page while IPv4 visitors see the new site, and it looks intermittent rather than broken.
+Three consequences:
 
-### 3.2 What to set
+1. **You override, you do not delete.** Adding a custom **A** record at the apex silently
+   deactivates Zoner's default apex **A**. There is no delete button to hunt for.
+2. **Overriding is per type and per name.** A custom apex **A** does nothing to the apex
+   **AAAA**, or to `www`'s **A**. Each of the four defaults must be overridden separately.
+3. **A `CNAME` on `www` will not work here.** CNAME is a different *type*, so it would not
+   deactivate the default `www A` / `www AAAA`, and a CNAME may not legally coexist with
+   other records at the same name. Point `www` at the same A/AAAA addresses instead.
 
-In Zoner's control panel (*Omat sivut* → your domain → **Nimipalvelin / DNS-tietueet**),
-set the apex to GitHub's four Pages IPv4 addresses:
+That last point is why the usual GitHub Pages advice (`CNAME www → user.github.io`) does not
+apply to this registrar.
 
-| Type | Name | Value |
-|---|---|---|
-| A | `@` | `185.199.108.153` |
-| A | `@` | `185.199.109.153` |
-| A | `@` | `185.199.110.153` |
-| A | `@` | `185.199.111.153` |
+### 3.2 What is there now
 
-And the four IPv6 addresses:
+Toggle **Show default DNS records** on to see everything. The zone currently holds:
 
-| Type | Name | Value |
-|---|---|---|
-| AAAA | `@` | `2606:50c0:8000::153` |
-| AAAA | `@` | `2606:50c0:8001::153` |
-| AAAA | `@` | `2606:50c0:8002::153` |
-| AAAA | `@` | `2606:50c0:8003::153` |
+| Name | Type | Origin | What it is | Action |
+|---|---|---|---|---|
+| *(apex)* | A | default | `5.249.230.99` — Zoner parking | **override** |
+| *(apex)* | AAAA | default | `2a02:2350:c:400:…` — Zoner parking | **override** |
+| `www` | A | default | `5.249.230.99` | **override** |
+| `www` | AAAA | default | `2a02:2350:c:400:…` | **override** |
+| *(apex)* | MX ×2 | custom | `mx1` / `mx2.zoner.fi` | **⚠ leave alone** |
+| `www` | MX | default | mail routing | leave alone |
+| *(apex)* | TXT | custom | SPF | **⚠ leave alone** |
+| `ed1._domainkey` | CNAME | default | DKIM signing key | **⚠ leave alone** |
+| `rsa1._domainkey` | CNAME | default | DKIM signing key | **⚠ leave alone** |
+| `_acme-challenge` | TXT | default | Zoner's own cert validation | harmless, leave |
 
-Then point `www` at the Pages host so it redirects to the apex:
+> **Touch nothing in the mail rows.** MX, TXT/SPF and the two `_domainkey` CNAMEs are what
+> make `@zuhair.fi` email work. They are completely independent of web hosting — changing
+> A and AAAA does not affect them.
 
-| Type | Name | Value |
-|---|---|---|
-| CNAME | `www` | `mzuhairkhan.github.io.` |
+### 3.3 Phase 1 — get `zuhair.fi` live (8 records)
 
-*(All eight IPs verified responding as GitHub Pages edge servers on 2 Aug 2026.)*
+Do this first and verify it before touching `www`. Only these eight records are needed for
+the site itself.
 
-Your zone's default TTL is **600 s**, so propagation should take minutes, not hours.
+**Leave the Name field empty** for every one of them (empty = the apex, `zuhair.fi`). If the
+form insists on something, use `@`.
 
-### 3.3 Set the domain in GitHub
+Add four **A** records:
 
-**Settings → Pages → Custom domain** → enter `zuhair.fi` → **Save**.
+```
+185.199.108.153
+185.199.109.153
+185.199.110.153
+185.199.111.153
+```
 
-GitHub runs a DNS check; it will fail until 3.2 has propagated. Once it passes, tick
-**Enforce HTTPS**. The Let's Encrypt certificate can take up to ~15 minutes to issue —
-until it does, HTTPS will show a certificate warning. This is normal; wait it out rather
-than re-saving the domain, which restarts the process.
+Add four **AAAA** records:
 
-If the certificate seems stuck for more than an hour, remove the custom domain, save, re-add
-it, and save again.
+```
+2606:50c0:8000::153
+2606:50c0:8001::153
+2606:50c0:8002::153
+2606:50c0:8003::153
+```
 
+Set TTL to **300** if the field is editable — it makes a rollback take five minutes instead
+of an hour. You can raise it once the site is confirmed working.
+
+As soon as the first custom A record saves, Zoner's default A is deactivated and the apex
+stops resolving to the parking page.
+
+> Skipping the AAAA half is the classic way to half-break this. IPv6 visitors — which on
+> mobile networks is most of them — would keep landing on Zoner's parking page while
+> everyone else sees the new site, and it presents as intermittent rather than broken.
+
+### 3.4 Phase 2 — point `www` at the site (8 more records)
+
+Optional but worth doing: without it, `www.zuhair.fi` keeps serving Zoner's parking page.
+
+Add the same eight addresses again, this time with the Name field set to **`www`** — four
+**A** records and four **AAAA** records, identical values to 3.3.
+
+GitHub reads the `CNAME` file in the deployment (which contains `zuhair.fi`) and redirects
+`www.zuhair.fi` to the apex automatically. Nothing further is needed on the GitHub side.
+
+### 3.5 Set the domain in GitHub
+
+Only after 3.3 has propagated:
+
+**Settings → Pages → Custom domain** → `zuhair.fi` → **Save**.
+
+GitHub runs a DNS check that will fail until the new records are visible, which is why this
+step comes last. Once it passes, tick **Enforce HTTPS**.
+
+The Let's Encrypt certificate can take up to ~15 minutes to issue; until it does, HTTPS
+shows a certificate warning. That is expected — wait rather than re-saving the domain, which
+restarts issuance. If it is still stuck after an hour, remove the custom domain, save, then
+re-add and save.
+
+*(All eight GitHub addresses were verified as responding Pages edge servers on 2 Aug 2026.)*
 ---
 
 ## Part 4 — Verify
