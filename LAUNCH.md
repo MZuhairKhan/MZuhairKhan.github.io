@@ -13,29 +13,56 @@ from the `MZuhairKhan/MZuhairKhan.github.io` repository.
 | 1 — Code on GitHub | ✅ pushed, commit `8f18c93` |
 | 2 — Pages on Actions | ✅ `build_type: workflow`, all three jobs green |
 | 3.3 — DNS Phase 1, apex | ✅ 4×A + 4×AAAA live, MX untouched |
+| 3.4 — DNS Phase 2, `www` | ✅ 4×A + 4×AAAA live |
 | 3.5 — Custom domain + HTTPS | ✅ `cname: zuhair.fi`, cert approved, enforced |
-| **3.4 — DNS Phase 2, `www`** | ⬜ **outstanding** |
-| 4 — Verify | ✅ apex; `www` pending Phase 2 |
+| 4 — Verify | ✅ apex and `www`, except the `www` certificate below |
 
-Every route serves correctly over both IPv4 and IPv6, the Let's Encrypt certificate
-(`CN=zuhair.fi`, valid to 31 Oct 2026) is issued and enforced, `mzuhairkhan.github.io`
-301-redirects to the apex, and the Zoner MX records are intact.
+Every route serves over both IPv4 and IPv6, `http://zuhair.fi` 301s to HTTPS,
+`http://www.zuhair.fi` 301s to the apex, `mzuhairkhan.github.io` 301s to the apex, and the
+Zoner MX records are intact.
 
-### Still outstanding
+### One item outstanding: the `www` certificate
 
-1. **`www.zuhair.fi` still points at Zoner** and serves "Under construction". Fix with
-   [3.4](#34-phase-2--point-www-at-the-site-8-more-records).
-2. **The certificate currently covers only the apex** — `https_certificate.domains` is
-   `["zuhair.fi"]`. GitHub re-issues it to include `www.zuhair.fi` automatically once www
-   resolves to GitHub, so this resolves itself as part of Phase 2.
-3. **Plain `http://zuhair.fi/` returns 404** rather than redirecting to HTTPS. HTTPS is
-   unaffected. This is GitHub's port-80 listener lagging the domain→repo mapping after a
-   custom domain is added; the HTTPS listener learns it immediately via SNI. It normally
-   clears within the hour with no action needed. Re-check with:
+The Let's Encrypt certificate covers **only the apex**:
 
-   ```bash
-   curl -sI http://zuhair.fi/ | head -1     # want: HTTP/1.1 301
-   ```
+```
+SNI zuhair.fi      -> CN=zuhair.fi,   SAN: DNS:zuhair.fi          (expires 2026-10-31)
+SNI www.zuhair.fi  -> CN=*.github.io  (GitHub's default fallback)
+```
+
+`https_certificate.domains` is `["zuhair.fi"]`. So `https://www.zuhair.fi` typed explicitly
+gives a certificate warning. Reaching `www.zuhair.fi` without a scheme is fine — the browser
+tries HTTP, which 301s to the apex.
+
+**What has been tried, and did not work:**
+
+1. Re-saving the same `cname` value via the API. GitHub sees no change and does not
+   re-request the certificate.
+2. Removing the custom domain and immediately re-adding it (~8 s gap). Polled for 15
+   minutes; `domains` stayed `["zuhair.fi"]`. Worth noting this caused **no downtime** —
+   the apex answered 200 throughout — so the manoeuvre is cheap, just ineffective. An 8 s
+   gap is likely too short for GitHub to deprovision and re-request; a multi-minute gap
+   would be a real outage and is the only remaining lever short of waiting.
+
+**Expected resolution:** GitHub reconciles `www` into the certificate on its own schedule
+once `www` resolves to Pages, normally within 24 h. `www` began resolving on 3 Aug 2026.
+
+Re-check with:
+
+```bash
+gh api repos/MZuhairKhan/MZuhairKhan.github.io/pages --jq '.https_certificate.domains'
+curl -sI https://www.zuhair.fi/ | head -1
+```
+
+> **Testing note:** the Windows DNS client cache went stale twice during this migration,
+> making `zuhair.fi` appear to still serve Zoner's "Under construction" page while
+> `nslookup` reported the correct GitHub addresses — `nslookup` queries the server directly
+> and bypasses the cache. Run `ipconfig /flushdns`, or pin the IP to take DNS out of the
+> picture entirely:
+>
+> ```bash
+> curl -sI --resolve zuhair.fi:443:185.199.108.153 https://zuhair.fi/
+> ```
 
 ---
 ## Part 0 — Pre-flight
