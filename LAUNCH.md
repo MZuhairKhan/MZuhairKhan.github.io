@@ -3,13 +3,28 @@
 End-to-end runbook for putting this site live on **zuhair.fi**, served by GitHub Pages
 from the `MZuhairKhan/MZuhairKhan.github.io` repository.
 
-**Status:** the repo is ready. Part 0 (domain config, social card, CNAME, gitignore, CV) is
-done and is kept below as a record. What remains is Parts 1–4, all of which happen on
-GitHub and at Zoner rather than in the code.
+## Status — 3 Aug 2026
 
-**The two steps that fail confusingly if skipped:** switching Pages from *Deploy from a
-branch* to *GitHub Actions* ([Part 2](#part-2--switch-pages-to-actions)), and replacing the
-**AAAA** records as well as the A records at Zoner ([Part 3](#part-3--dns-at-zoner)).
+| Part | State |
+|---|---|
+| 0 — Pre-flight (domain config, social card, CNAME, gitignore, CV) | ✅ done |
+| 1 — Code on GitHub | ✅ pushed, commit `8f18c93` |
+| 2 — Pages on Actions | ✅ `build_type: workflow`, all three jobs green |
+| **3 — DNS at Zoner** | ⬜ **next — only you can do this** |
+| 4 — Verify | ⬜ after DNS propagates |
+
+**The site is live at <https://mzuhairkhan.github.io/>** and already serves the `zuhair.fi`
+canonical tags and a `/CNAME` file. It will not answer on `zuhair.fi` until the DNS in
+[Part 3](#part-3--dns-at-zoner) is changed — the domain still points at Zoner's
+"Under construction" page.
+
+GitHub has **not** registered the custom domain yet (`cname: null`). That is expected and
+correct: the DNS check cannot pass while the records point elsewhere. Change the records
+first, then [3.3](#33-set-the-domain-in-github).
+
+> **The one step that silently half-breaks the launch:** replacing the A records but not the
+> **AAAA** records. IPv6 visitors — most mobile networks — would keep landing on Zoner's
+> parking page while everyone else sees the new site.
 
 ---
 ## Part 0 — Pre-flight
