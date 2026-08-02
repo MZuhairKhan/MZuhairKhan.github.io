@@ -5,26 +5,37 @@ from the `MZuhairKhan/MZuhairKhan.github.io` repository.
 
 ## Status — 3 Aug 2026
 
+# 🟢 **The site is live at <https://zuhair.fi>**
+
 | Part | State |
 |---|---|
 | 0 — Pre-flight (domain config, social card, CNAME, gitignore, CV) | ✅ done |
 | 1 — Code on GitHub | ✅ pushed, commit `8f18c93` |
 | 2 — Pages on Actions | ✅ `build_type: workflow`, all three jobs green |
-| **3 — DNS at Zoner** | ⬜ **next — only you can do this** |
-| 4 — Verify | ⬜ after DNS propagates |
+| 3.3 — DNS Phase 1, apex | ✅ 4×A + 4×AAAA live, MX untouched |
+| 3.5 — Custom domain + HTTPS | ✅ `cname: zuhair.fi`, cert approved, enforced |
+| **3.4 — DNS Phase 2, `www`** | ⬜ **outstanding** |
+| 4 — Verify | ✅ apex; `www` pending Phase 2 |
 
-**The site is live at <https://mzuhairkhan.github.io/>** and already serves the `zuhair.fi`
-canonical tags and a `/CNAME` file. It will not answer on `zuhair.fi` until the DNS in
-[Part 3](#part-3--dns-at-zoner) is changed — the domain still points at Zoner's
-"Under construction" page.
+Every route serves correctly over both IPv4 and IPv6, the Let's Encrypt certificate
+(`CN=zuhair.fi`, valid to 31 Oct 2026) is issued and enforced, `mzuhairkhan.github.io`
+301-redirects to the apex, and the Zoner MX records are intact.
 
-GitHub has **not** registered the custom domain yet (`cname: null`). That is expected and
-correct: the DNS check cannot pass while the records point elsewhere. Change the records
-first, then [3.5](#35-set-the-domain-in-github).
+### Still outstanding
 
-> **The one step that silently half-breaks the launch:** replacing the A records but not the
-> **AAAA** records. IPv6 visitors — most mobile networks — would keep landing on Zoner's
-> parking page while everyone else sees the new site.
+1. **`www.zuhair.fi` still points at Zoner** and serves "Under construction". Fix with
+   [3.4](#34-phase-2--point-www-at-the-site-8-more-records).
+2. **The certificate currently covers only the apex** — `https_certificate.domains` is
+   `["zuhair.fi"]`. GitHub re-issues it to include `www.zuhair.fi` automatically once www
+   resolves to GitHub, so this resolves itself as part of Phase 2.
+3. **Plain `http://zuhair.fi/` returns 404** rather than redirecting to HTTPS. HTTPS is
+   unaffected. This is GitHub's port-80 listener lagging the domain→repo mapping after a
+   custom domain is added; the HTTPS listener learns it immediately via SNI. It normally
+   clears within the hour with no action needed. Re-check with:
+
+   ```bash
+   curl -sI http://zuhair.fi/ | head -1     # want: HTTP/1.1 301
+   ```
 
 ---
 ## Part 0 — Pre-flight
